@@ -1,0 +1,8 @@
+.next
+node_modules
+out
+coverage
+src/lib/api/schema.d.ts
+openapi.json
+package-lock.json
+AGENTS.md

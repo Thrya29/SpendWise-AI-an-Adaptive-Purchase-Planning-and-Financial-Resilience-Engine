@@ -1,0 +1,22 @@
+#!/bin/sh
+# Args: $1 = remote name, $2 = remote URL. Stdin: <local ref> <local sha> <remote ref> <remote sha>
+. "$(git rev-parse --show-toplevel)/.githooks/guard.sh"
+
+check_identity
+check_remote_url "$2"
+
+zero="0000000000000000000000000000000000000000"
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue
+  if [ "$remote_sha" = "$zero" ]; then
+    range="$local_sha"
+  else
+    range="$remote_sha..$local_sha"
+  fi
+  expected_line="$EXPECTED_NAME <$EXPECTED_EMAIL> | $EXPECTED_NAME <$EXPECTED_EMAIL>"
+  bad="$(git log --format='%an <%ae> | %cn <%ce>' "$range" | grep -vxF "$expected_line" || true)"
+  [ -n "$bad" ] && fail "commits with non-Thrya29 identity in push range:
+$bad"
+done
+
+exit 0

@@ -1,0 +1,12 @@
+#!/bin/sh
+. "$(git rev-parse --show-toplevel)/.githooks/guard.sh"
+
+check_identity
+
+# Never commit office identifiers or hiring-process references into the codebase.
+if git diff --cached -U0 --no-color -- . ':(exclude).githooks/*' \
+    | grep -E '^\+' | grep -qiE 'thrya-jane|janeaerospace|recruit'; then
+  fail "staged changes contain a forbidden term (office identity or hiring reference)"
+fi
+
+exit 0
