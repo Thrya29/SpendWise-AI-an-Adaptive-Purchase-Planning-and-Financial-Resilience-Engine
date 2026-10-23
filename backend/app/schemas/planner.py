@@ -48,8 +48,10 @@ class DecisionOut(ApiModel):
     kind: ItemKind
     priority: int
     quantity: int
-    unit_price_minor: int
+    unit_price_minor: int  # in the plan's currency (converted if needed)
     cost_minor: int
+    original_currency: str
+    original_unit_price_minor: int
     current_target_date: date | None
     deadline_type: DeadlineType
     action: Action

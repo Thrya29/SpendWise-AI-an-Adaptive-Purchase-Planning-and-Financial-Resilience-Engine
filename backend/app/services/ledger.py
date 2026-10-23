@@ -21,6 +21,7 @@ from app.models.entities import (
     TxnKind,
     User,
 )
+from app.services.fx_service import Converter, latest_table
 
 
 async def account_balances(
@@ -46,6 +47,7 @@ async def account_balances(
 class PlanningInputs:
     currency: str
     opening_balance: Money
+    converter: Converter
     incomes: list[IncomeSpec] = field(default_factory=list)
     obligations: list[ObligationSpec] = field(default_factory=list)
     planned: list[PlannedSpend] = field(default_factory=list)
@@ -63,8 +65,20 @@ def purchase_date(item: PlannedItem, today: date) -> date | None:
 async def load_planning_inputs(
     session: AsyncSession, user: User, today: date, *, include_planned: bool = True
 ) -> PlanningInputs:
+    """Everything a projection or plan needs, in the user's base currency.
+
+    Other-currency amounts are converted at the latest reference rate and each conversion
+    is reported; amounts that cannot be converted are excluded with a warning.
+    """
     cur = user.base_currency
+    fx = Converter(cur, await latest_table(session, today))
     warnings: list[str] = []
+
+    def to_base(amount: int, currency: str, label: str) -> Money | None:
+        converted, note = fx.convert(Money(amount, currency), label)
+        if note:
+            warnings.append(note)
+        return converted
 
     balances = await account_balances(session, user.id, as_of=today)
     accounts = await session.scalars(
@@ -74,36 +88,34 @@ async def load_planning_inputs(
     )
     opening = 0
     for acc in accounts:
-        if acc.currency != cur:
-            warnings.append(
-                f"Account '{acc.name}' ({acc.currency}) excluded: currency differs from {cur}."
-            )
-            continue
-        opening += balances.get(acc.id, acc.opening_balance_minor)
+        balance = to_base(
+            balances.get(acc.id, acc.opening_balance_minor), acc.currency, f"Account '{acc.name}'"
+        )
+        if balance is not None:
+            opening += balance.amount_minor
 
-    inputs = PlanningInputs(currency=cur, opening_balance=Money(opening, cur), warnings=warnings)
+    inputs = PlanningInputs(
+        currency=cur, opening_balance=Money(opening, cur), warnings=warnings, converter=fx
+    )
 
     for inc in await session.scalars(select(IncomeStream).where(IncomeStream.user_id == user.id)):
-        if inc.currency != cur:
-            warnings.append(f"Income '{inc.name}' ({inc.currency}) excluded: currency differs.")
-            continue
-        inputs.incomes.append(
-            IncomeSpec(
-                inc.name, Money(inc.amount_minor, cur), inc.frequency, inc.anchor_date,
-                inc.end_date, inc.subject_to_shocks,
-            )
-        )  # fmt: skip
+        amount = to_base(inc.amount_minor, inc.currency, f"Income '{inc.name}'")
+        if amount is not None:
+            inputs.incomes.append(
+                IncomeSpec(
+                    inc.name, amount, inc.frequency, inc.anchor_date, inc.end_date,
+                    inc.subject_to_shocks,
+                )
+            )  # fmt: skip
 
     for ob in await session.scalars(select(Obligation).where(Obligation.user_id == user.id)):
-        if ob.currency != cur:
-            warnings.append(f"Obligation '{ob.name}' ({ob.currency}) excluded: currency differs.")
-            continue
-        inputs.obligations.append(
-            ObligationSpec(
-                ob.name, Money(ob.amount_minor, cur), ob.frequency, ob.anchor_date,
-                ob.end_date, ob.essential,
+        amount = to_base(ob.amount_minor, ob.currency, f"Obligation '{ob.name}'")
+        if amount is not None:
+            inputs.obligations.append(
+                ObligationSpec(
+                    ob.name, amount, ob.frequency, ob.anchor_date, ob.end_date, ob.essential
+                )
             )
-        )  # fmt: skip
 
     if include_planned:
         items = await session.scalars(
@@ -112,15 +124,15 @@ async def load_planning_inputs(
             )
         )
         for item in items:
-            if item.currency != cur:
-                warnings.append(f"Item '{item.name}' ({item.currency}) excluded: currency differs.")
-                continue
             on = purchase_date(item, today)
             if on is None:
                 inputs.unscheduled_items.append(item)
                 continue
-            total = item.estimated_price_minor * item.quantity
-            inputs.planned.append(PlannedSpend(str(item.id), item.name, Money(total, cur), on))
+            total = to_base(
+                item.estimated_price_minor * item.quantity, item.currency, f"Item '{item.name}'"
+            )
+            if total is not None:
+                inputs.planned.append(PlannedSpend(str(item.id), item.name, total, on))
         if inputs.unscheduled_items:
             warnings.append(
                 f"{len(inputs.unscheduled_items)} planned item(s) have no target date and are "

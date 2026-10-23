@@ -79,6 +79,11 @@ function DecisionRow({
       </div>
       <div className="text-right">
         <p className="font-semibold tabular">{formatMoney(d.cost_minor, currency)}</p>
+        {d.original_currency !== currency && (
+          <p className="text-xs text-muted tabular">
+            from {formatMoney(d.original_unit_price_minor * d.quantity, d.original_currency)}
+          </p>
+        )}
         {d.pay_on && <p className="text-xs text-muted">{formatDate(d.pay_on)}</p>}
       </div>
     </li>

@@ -176,7 +176,7 @@ items_router = build_crud_router(
                       PlannedItem.target_date, PlannedItem.name),
     before_write=_item_hook,
     non_nullable=frozenset({"name", "tier", "kind", "status", "priority", "estimated_price_minor",
-                            "quantity", "deadline_type", "lead_time_days"}),
+                            "quantity", "deadline_type", "lead_time_days", "track_price"}),
 )  # fmt: skip
 
 

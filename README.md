@@ -20,6 +20,9 @@ emergency reserve, and what happens if your **salary is delayed** or an **emerge
 | **Emergency reserve** | A configurable reserve (N months of essentials + a buffer) that plans must never spend. |
 | **What-if simulator** | Projects the balance day by day for 3–24 months. You can apply a **salary delay** (paid late as arrears) or **salary loss** for N months, plus an **unexpected expense**. You see when you'd dip into the reserve or run out, and which planned purchases stay safe. |
 | **Purchase planner** | Chooses the best month and day to buy each item, or postpones it, so your balance never drops below your reserve, **even if salary is late or lost** (you choose which shocks to guard against). It is an exact constraint solver (OR-Tools CP-SAT), not a heuristic. Every decision has a reason: postponed items show the exact extra money needed and by when. Nothing changes until you approve, and using the reserve always needs explicit consent. |
+| **Prices from links** | Paste a product link and SpendWise reads the price the page publishes for search engines (schema.org data), along with its source, time and stock status. Every check is kept as price history, and you can also record quotes from local shops. Your planning price changes only when you click *Use this price* or turn on *Track this price*. Every price shows where it came from and how old it is. |
+| **Price alerts** | For tracked items: a price at or below your maximum, a drop of 5% or more, back in stock, or checks that keep failing. A background worker re-checks twice a day, politely spacing out visits to each site. |
+| **Multi-currency** | Daily European Central Bank reference rates. Accounts, income and items in other currencies are **converted exactly, with the rate and date shown**. Currencies without a reference rate are left out with a warning, never guessed. |
 | **"Describe it" entry** | Type *"work laptop for 75k by 15 Dec, must have"* and the assistant fills in the form for you to review. |
 | **AI assistant mode** | Each user chooses the built-in assistant (offline, no API key) or **their own Claude API key**, which is stored encrypted and never shown again. AI only reads text and writes summaries. It never does the math: a summary containing any number the engine didn't produce is rejected. Any AI failure falls back to the built-in assistant. |
 | **Account & privacy** | Sign-up with country, city, address and timezone; password change; full JSON data export; permanent account deletion. |
@@ -35,7 +38,8 @@ low point is ₹10,000, and both delayed salaries arrive together later. See
 
 ```
 Browser ──► Next.js (UI + same-origin /api proxy) ──► FastAPI ──► PostgreSQL
-                                                         └──────► Redis (rate limits)
+                                                         ├──────► Redis (rate limits)
+             Worker (same image): FX + price checks ─────┘   ──► public web (SSRF-guarded)
 ```
 
 * **Deterministic core.** Balances, projections and reserve checks are pure Python with integer
@@ -45,7 +49,7 @@ Browser ──► Next.js (UI + same-origin /api proxy) ──► FastAPI ──
 * **Typed contract.** The frontend's TypeScript types are generated from the API's OpenAPI schema,
   and CI fails if they drift.
 
-Full design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Planner: [ADR 0005](docs/adr/0005-robust-purchase-scheduling.md) · Decisions: [docs/adr/](docs/adr/) ·
+Full design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Planner: [ADR 0005](docs/adr/0005-robust-purchase-scheduling.md) · Market data: [ADR 0006](docs/adr/0006-market-data-provenance.md) · Decisions: [docs/adr/](docs/adr/) ·
 Security: [docs/SECURITY.md](docs/SECURITY.md)
 
 ## Run it
@@ -96,18 +100,19 @@ Built in phases. Each phase ships tested and documented before the next begins.
 | 0 | Foundation: repo, CI, Docker, auth, security baseline | ✅ Done |
 | 1 | Ledger, needs/wants/desires CRUD, cash-flow projection, salary-delay & emergency scenarios | ✅ Done |
 | 2 | Purchase **scheduling optimizer** (CP-SAT): buy now / schedule / postpone / wait for price / use reserve with consent; replanning; AI item entry and summaries (built-in or Claude) | ✅ Done |
-| 3 | Market intelligence: link ingestion with source provenance, price history, FX, alerts | ⏳ Next |
-| 4 | Price forecasting with calibrated uncertainty; alternative-product discovery | Planned |
+| 3 | Market data: link prices with provenance, price history and quotes, multi-currency (ECB), alerts, background worker; SSRF-hardened fetching | ✅ Done |
+| 4 | Price forecasting with calibrated uncertainty; alternative-product discovery | ⏳ Next |
 | 5 | Savings & investment education: runway, FD vs. liquid, mutual-fund NAVs, gold (all sourced and timestamped) | Planned |
 | 6 | Research benchmark: planner vs. baseline budgeting rules under simulated shocks | Planned |
 | 7 | Production hardening: observability, load tests, deployment guide | Planned |
 
 ## Honest limits
 
-* Planning currently covers amounts in your **main currency**. Other-currency accounts and items
-  are listed as excluded, never silently converted. FX conversion arrives in Phase 3.
-* Prices are your own estimates until market data (Phase 3) is added. Every price will always show
-  its source and age, and nothing stale is ever labelled "live".
+* **Not every shop can be read.** Big marketplaces often block automated checks or build the price
+  with JavaScript. SpendWise then says it found no price, and you enter one yourself or record a
+  quote. It never scrapes visible text or guesses.
+* Exchange rates are daily ECB reference rates, so they're not live market quotes. About 30
+  currencies are covered; others (e.g. AED, SAR) are left out of planning with a warning.
 
 ## License
 

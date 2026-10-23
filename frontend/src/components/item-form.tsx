@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { MoneyInput } from "@/components/money-input";
-import { Alert, Button, Field, Input, Select, Textarea } from "@/components/ui";
+import { Alert, Button, Checkbox, Field, Input, Select, Textarea } from "@/components/ui";
 import { api, ApiError, type Schemas } from "@/lib/api/client";
 import { DEADLINES, ITEM_KINDS, ITEM_STATUSES, TIERS, type Tier } from "@/lib/labels";
 import { CURRENCIES, minorToInput, parseToMinor } from "@/lib/money";
@@ -18,6 +18,7 @@ type Initial = Partial<
     | "name" | "tier" | "kind" | "priority" | "estimated_price_minor" | "currency" | "quantity"
     | "target_date" | "deadline_type" | "lead_time_days" | "max_price_minor" | "url" | "location"
     | "notes"
+    | "track_price"
   >
 >; // prettier-ignore
 
@@ -65,6 +66,58 @@ export function ItemForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
+  const urlRef = useRef<HTMLInputElement>(null);
+  const [lookup, setLookup] = useState<{ tone: "success" | "warning"; text: string } | null>(null);
+  const [looking, setLooking] = useState(false);
+
+  async function priceFromLink() {
+    const url = urlRef.current?.value.trim();
+    if (!url) {
+      setLookup({ tone: "warning", text: "Paste a product link first." });
+      return;
+    }
+    setLooking(true);
+    setLookup(null);
+    try {
+      const preview = await api<Schemas["PreviewOut"]>("/market/preview", {
+        method: "POST",
+        body: { url },
+      });
+      if (!preview.found || preview.price_minor == null || !preview.currency) {
+        setLookup({ tone: "warning", text: preview.message });
+        return;
+      }
+      if (preview.currency !== currency && item) {
+        setLookup({
+          tone: "warning",
+          text: `The page lists the price in ${preview.currency}, but this item is in ${currency}.`,
+        });
+        return;
+      }
+      if (preview.currency !== currency) setCurrency(preview.currency);
+      if (priceRef.current)
+        priceRef.current.value = minorToInput(preview.price_minor, preview.currency);
+      if (nameRef.current && !nameRef.current.value.trim() && preview.title) {
+        nameRef.current.value = preview.title.slice(0, 200);
+      }
+      const stock =
+        preview.availability === "out_of_stock"
+          ? " Currently out of stock."
+          : preview.availability === "in_stock"
+            ? " In stock."
+            : "";
+      setLookup({ tone: "success", text: `${preview.message}${stock} Check it before saving.` });
+    } catch (err) {
+      setLookup({
+        tone: "warning",
+        text: err instanceof ApiError ? err.message : "Could not read that link.",
+      });
+    } finally {
+      setLooking(false);
+    }
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -94,6 +147,7 @@ export function ItemForm({
       url: str("url") || null,
       location: str("location") || null,
       notes: str("notes") || null,
+      track_price: f.get("track_price") === "on",
     };
 
     setBusy(true);
@@ -134,7 +188,15 @@ export function ItemForm({
         hint="A product, a service like a salon visit, a trip…"
       >
         {(p) => (
-          <Input {...p} name="name" defaultValue={init?.name} required maxLength={200} autoFocus />
+          <Input
+            {...p}
+            ref={nameRef}
+            name="name"
+            defaultValue={init?.name}
+            required
+            maxLength={200}
+            autoFocus
+          />
         )}
       </Field>
 
@@ -176,6 +238,7 @@ export function ItemForm({
           {(p) => (
             <MoneyInput
               {...p}
+              ref={priceRef}
               name="price"
               currency={currency}
               defaultValue={
@@ -251,6 +314,7 @@ export function ItemForm({
           {(p) => (
             <Input
               {...p}
+              ref={urlRef}
               name="url"
               type="url"
               inputMode="url"
@@ -275,6 +339,27 @@ export function ItemForm({
             />
           )}
         </Field>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-lg bg-surface-muted p-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => void priceFromLink()}
+            loading={looking}
+          >
+            Get price from link
+          </Button>
+          <Checkbox
+            name="track_price"
+            defaultChecked={init?.track_price ?? false}
+            label="Track this price"
+            hint="Re-check the link twice a day, update the price and alert you to drops"
+          />
+        </div>
+        {lookup && <Alert tone={lookup.tone}>{lookup.text}</Alert>}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

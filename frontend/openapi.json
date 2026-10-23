@@ -200,6 +200,106 @@
         "title": "Action",
         "type": "string"
       },
+      "AlertCount": {
+        "additionalProperties": false,
+        "properties": {
+          "unread": {
+            "title": "Unread",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "unread"
+        ],
+        "title": "AlertCount",
+        "type": "object"
+      },
+      "AlertKind": {
+        "enum": [
+          "price_target",
+          "price_drop",
+          "check_failing",
+          "back_in_stock"
+        ],
+        "title": "AlertKind",
+        "type": "string"
+      },
+      "AlertOut": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AlertKind"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "item_id",
+          "kind",
+          "title",
+          "body",
+          "created_at",
+          "read_at"
+        ],
+        "title": "AlertOut",
+        "type": "object"
+      },
+      "ApplyObservationIn": {
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "ApplyObservationIn",
+        "type": "object"
+      },
       "ApplyRequest": {
         "additionalProperties": false,
         "properties": {
@@ -266,6 +366,16 @@
         "title": "ApplyResponse",
         "type": "object"
       },
+      "Availability": {
+        "enum": [
+          "in_stock",
+          "out_of_stock",
+          "preorder",
+          "unknown"
+        ],
+        "title": "Availability",
+        "type": "string"
+      },
       "CashEventOut": {
         "additionalProperties": false,
         "properties": {
@@ -310,6 +420,46 @@
           "ref"
         ],
         "title": "CashEventOut",
+        "type": "object"
+      },
+      "CheckOut": {
+        "additionalProperties": false,
+        "properties": {
+          "applied_to_item": {
+            "title": "Applied To Item",
+            "type": "boolean"
+          },
+          "found": {
+            "title": "Found",
+            "type": "boolean"
+          },
+          "item_version": {
+            "title": "Item Version",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "observation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ObservationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "found",
+          "message",
+          "observation",
+          "applied_to_item",
+          "item_version"
+        ],
+        "title": "CheckOut",
         "type": "object"
       },
       "DateChange": {
@@ -437,6 +587,14 @@
             "title": "Name",
             "type": "string"
           },
+          "original_currency": {
+            "title": "Original Currency",
+            "type": "string"
+          },
+          "original_unit_price_minor": {
+            "title": "Original Unit Price Minor",
+            "type": "integer"
+          },
           "pay_on": {
             "anyOf": [
               {
@@ -527,6 +685,8 @@
           "quantity",
           "unit_price_minor",
           "cost_minor",
+          "original_currency",
+          "original_unit_price_minor",
           "current_target_date",
           "deadline_type",
           "action",
@@ -616,6 +776,58 @@
         ],
         "title": "Frequency",
         "type": "string"
+      },
+      "FxOut": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "base": {
+            "title": "Base",
+            "type": "string"
+          },
+          "rates": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Units of base currency per one unit of each currency",
+            "title": "Rates",
+            "type": "object"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          }
+        },
+        "required": [
+          "available",
+          "base",
+          "as_of",
+          "source"
+        ],
+        "title": "FxOut",
+        "type": "object"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1393,6 +1605,107 @@
         "title": "ObligationUpdate",
         "type": "object"
       },
+      "ObservationMethod": {
+        "enum": [
+          "json_ld",
+          "microdata",
+          "opengraph",
+          "manual"
+        ],
+        "title": "ObservationMethod",
+        "type": "string"
+      },
+      "ObservationOut": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_minor": {
+            "title": "Amount Minor",
+            "type": "integer"
+          },
+          "availability": {
+            "$ref": "#/components/schemas/Availability"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_id": {
+            "format": "uuid",
+            "title": "Item Id",
+            "type": "string"
+          },
+          "method": {
+            "$ref": "#/components/schemas/ObservationMethod"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "page_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Title"
+          },
+          "source_name": {
+            "title": "Source Name",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "id",
+          "item_id",
+          "amount_minor",
+          "currency",
+          "method",
+          "confidence",
+          "availability",
+          "source_name",
+          "url",
+          "page_title",
+          "note",
+          "observed_at"
+        ],
+        "title": "ObservationOut",
+        "type": "object"
+      },
       "Page_AccountRead_": {
         "properties": {
           "items": {
@@ -1979,6 +2292,11 @@
           "tier": {
             "$ref": "#/components/schemas/Tier"
           },
+          "track_price": {
+            "default": false,
+            "title": "Track Price",
+            "type": "boolean"
+          },
           "url": {
             "anyOf": [
               {
@@ -2028,6 +2346,29 @@
           },
           "kind": {
             "$ref": "#/components/schemas/ItemKind"
+          },
+          "last_check_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Check Error"
+          },
+          "last_checked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Checked At"
           },
           "lead_time_days": {
             "title": "Lead Time Days",
@@ -2123,6 +2464,10 @@
           "tier": {
             "$ref": "#/components/schemas/Tier"
           },
+          "track_price": {
+            "title": "Track Price",
+            "type": "boolean"
+          },
           "updated_at": {
             "format": "date-time",
             "title": "Updated At",
@@ -2164,6 +2509,9 @@
           "location",
           "notes",
           "purchased_on",
+          "track_price",
+          "last_checked_at",
+          "last_check_error",
           "version",
           "created_at",
           "updated_at"
@@ -2340,6 +2688,17 @@
               }
             ]
           },
+          "track_price": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Track Price"
+          },
           "url": {
             "anyOf": [
               {
@@ -2366,11 +2725,125 @@
         "title": "PlannedItemUpdate",
         "type": "object"
       },
+      "PreviewOut": {
+        "additionalProperties": false,
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/Availability"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "found": {
+            "title": "Found",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ObservationMethod"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "price_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Minor"
+          },
+          "source_name": {
+            "title": "Source Name",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "source_name",
+          "title",
+          "found",
+          "price_minor",
+          "currency",
+          "method",
+          "confidence",
+          "availability",
+          "message"
+        ],
+        "title": "PreviewOut",
+        "type": "object"
+      },
+      "PreviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "format": "uri",
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "PreviewRequest",
+        "type": "object"
+      },
       "PriceSource": {
         "enum": [
           "user",
           "link",
-          "estimate"
+          "estimate",
+          "quote"
         ],
         "title": "PriceSource",
         "type": "string"
@@ -2671,6 +3144,41 @@
           "warnings"
         ],
         "title": "ProjectionResponse",
+        "type": "object"
+      },
+      "QuoteIn": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_minor": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000000000000000.0,
+            "title": "Amount Minor",
+            "type": "integer"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "source_name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Source Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount_minor",
+          "source_name"
+        ],
+        "title": "QuoteIn",
         "type": "object"
       },
       "Reason": {
@@ -3579,6 +4087,156 @@
         ]
       }
     },
+    "/api/v1/alerts": {
+      "get": {
+        "operationId": "list_alerts_api_v1_alerts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unread",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Unread",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AlertOut"
+                  },
+                  "title": "Response List Alerts Api V1 Alerts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Alerts",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/alerts/read-all": {
+      "post": {
+        "operationId": "mark_all_read_api_v1_alerts_read_all_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Mark All Read",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/alerts/unread-count": {
+      "get": {
+        "operationId": "unread_count_api_v1_alerts_unread_count_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertCount"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unread Count",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/alerts/{alert_id}/read": {
+      "post": {
+        "operationId": "mark_read_api_v1_alerts__alert_id__read_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "alert_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Alert Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Mark Read",
+        "tags": [
+          "market"
+        ]
+      }
+    },
     "/api/v1/assistant/parse-item": {
       "post": {
         "description": "Turn a note like \"salon visit next month around 1500\" into a draft item to review.",
@@ -3835,6 +4493,58 @@
         "summary": "Register",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/fx/latest": {
+      "get": {
+        "operationId": "latest_rates_api_v1_fx_latest_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FxOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Latest Rates",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/fx/refresh": {
+      "post": {
+        "operationId": "refresh_rates_api_v1_fx_refresh_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FxOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Refresh Rates",
+        "tags": [
+          "market"
         ]
       }
     },
@@ -4254,6 +4964,243 @@
         ]
       }
     },
+    "/api/v1/items/{item_id}/price-check": {
+      "post": {
+        "operationId": "check_price_api_v1_items__item_id__price_check_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Check Price",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/items/{item_id}/prices": {
+      "get": {
+        "operationId": "price_history_api_v1_items__item_id__prices_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ObservationOut"
+                  },
+                  "title": "Response Price History Api V1 Items  Item Id  Prices Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Price History",
+        "tags": [
+          "market"
+        ]
+      },
+      "post": {
+        "description": "Record a price you were quoted (a local shop, a call, a brochure).",
+        "operationId": "record_quote_api_v1_items__item_id__prices_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Record Quote",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/items/{item_id}/prices/{observation_id}/apply": {
+      "post": {
+        "operationId": "use_observed_price_api_v1_items__item_id__prices__observation_id__apply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "observation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Observation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyObservationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlannedItemRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Use Observed Price",
+        "tags": [
+          "market"
+        ]
+      }
+    },
     "/api/v1/items/{obj_id}": {
       "delete": {
         "operationId": "delete_row_api_v1_items__obj_id__delete",
@@ -4394,6 +5341,53 @@
         "summary": "Update Row",
         "tags": [
           "planned items"
+        ]
+      }
+    },
+    "/api/v1/market/preview": {
+      "post": {
+        "description": "Read the price a page publishes, without saving anything.",
+        "operationId": "preview_link_api_v1_market_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Preview Link",
+        "tags": [
+          "market"
         ]
       }
     },

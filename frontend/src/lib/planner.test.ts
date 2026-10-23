@@ -16,6 +16,8 @@ function decision(overrides: Partial<Decision>): Decision {
     quantity: 1,
     unit_price_minor: 3_000_000,
     cost_minor: 3_000_000,
+    original_currency: "INR",
+    original_unit_price_minor: 3_000_000,
     current_target_date: "2026-11-20",
     deadline_type: "soft",
     action: "schedule",

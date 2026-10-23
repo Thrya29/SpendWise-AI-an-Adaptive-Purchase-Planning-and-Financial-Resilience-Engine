@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { ItemForm } from "@/components/item-form";
+import { PriceHistory } from "@/components/price-history";
 import { DraftBanner, QuickAdd } from "@/components/quick-add";
 import {
   Alert,
@@ -28,6 +29,7 @@ import {
   type ItemStatus,
   type Tier,
 } from "@/lib/labels";
+import { hostname, priceProvenance } from "@/lib/market";
 import { formatMoney } from "@/lib/money";
 import { useResource } from "@/lib/use-resource";
 
@@ -40,6 +42,16 @@ const STATUS_TONE: Record<ItemStatus, "brand" | "success" | "warning" | "neutral
   postponed: "warning",
   dropped: "neutral",
 };
+
+function PriceSourceLine({ item }: { item: Item }) {
+  const { label, stale } = priceProvenance(item);
+  return (
+    <p className={stale ? "text-xs text-warning" : "text-xs text-muted"}>
+      {label}
+      {stale && " · may be outdated"}
+    </p>
+  );
+}
 
 export default function PlanPage() {
   const user = useUser();
@@ -54,6 +66,30 @@ export default function PlanPage() {
   const [deleting, setDeleting] = useState<Item | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [checkingId, setCheckingId] = useState<string | null>(null);
+  const [checkResult, setCheckResult] = useState<{ ok: boolean; text: string } | null>(null);
+  const [historyFor, setHistoryFor] = useState<Item | null>(null);
+
+  async function checkPrice(item: Item) {
+    setCheckingId(item.id);
+    setCheckResult(null);
+    try {
+      const r = await api<Schemas["CheckOut"]>(`/items/${item.id}/price-check`, {
+        method: "POST",
+      });
+      const applied = r.applied_to_item ? " Your item now uses this price." : "";
+      const hint = r.found && !r.applied_to_item ? " Open Prices to use it." : "";
+      setCheckResult({ ok: r.found, text: `${item.name}: ${r.message}${applied}${hint}` });
+      await items.reload();
+    } catch (err) {
+      setCheckResult({
+        ok: false,
+        text: err instanceof ApiError ? err.message : "The price check failed.",
+      });
+    } finally {
+      setCheckingId(null);
+    }
+  }
 
   const query = {
     tier: tier === "all" ? undefined : tier,
@@ -163,6 +199,11 @@ export default function PlanPage() {
           <Alert>{actionError}</Alert>
         </div>
       )}
+      {checkResult && (
+        <div className="mb-4">
+          <Alert tone={checkResult.ok ? "success" : "warning"}>{checkResult.text}</Alert>
+        </div>
+      )}
 
       {items.loading && !items.data ? (
         <LoadingBlock />
@@ -205,9 +246,7 @@ export default function PlanPage() {
                       {item.quantity} × {formatMoney(item.estimated_price_minor, item.currency)}
                     </p>
                   )}
-                  <p className="text-xs text-muted">
-                    {item.price_source === "user" ? "Your estimate" : item.price_source}
-                  </p>
+                  <PriceSourceLine item={item} />
                 </div>
               </div>
 
@@ -240,15 +279,32 @@ export default function PlanPage() {
                       rel="noopener noreferrer nofollow"
                       className="text-brand hover:underline"
                     >
-                      {new URL(item.url).hostname}
+                      {hostname(item.url)}
                     </a>
                   )}
+                  {item.track_price && " · tracking price"}
                 </p>
+              )}
+              {item.last_check_error && (
+                <p className="text-xs text-warning">Last price check: {item.last_check_error}</p>
               )}
 
               <div className="mt-auto flex flex-wrap gap-2 border-t border-border pt-3">
                 <Button size="sm" variant="secondary" onClick={() => setEditing(item)}>
                   Edit
+                </Button>
+                {item.url && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    loading={checkingId === item.id}
+                    onClick={() => void checkPrice(item)}
+                  >
+                    Check price
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" onClick={() => setHistoryFor(item)}>
+                  Prices
                 </Button>
                 {item.status === "planned" && (
                   <>
@@ -314,6 +370,15 @@ export default function PlanPage() {
             }}
           />
         )}
+      </Dialog>
+
+      <Dialog
+        open={historyFor !== null}
+        onClose={() => setHistoryFor(null)}
+        title={historyFor ? `Prices: ${historyFor.name}` : ""}
+        wide
+      >
+        {historyFor && <PriceHistory item={historyFor} onChanged={() => void items.reload()} />}
       </Dialog>
 
       <ConfirmDialog

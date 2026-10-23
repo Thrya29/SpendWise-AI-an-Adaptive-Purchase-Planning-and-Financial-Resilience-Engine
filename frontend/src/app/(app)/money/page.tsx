@@ -23,10 +23,11 @@ import {
   LoadingBlock,
   PageHeader,
 } from "@/components/ui";
-import { api, ApiError } from "@/lib/api/client";
+import { api, ApiError, type Schemas } from "@/lib/api/client";
 import { useUser } from "@/lib/auth";
 import { ACCOUNT_KINDS, formatDate, FREQUENCIES, labelOf } from "@/lib/labels";
-import { formatMoney } from "@/lib/money";
+import { approxConvert } from "@/lib/market";
+import { formatMoney, minorExponent } from "@/lib/money";
 import { useResource, type Resource } from "@/lib/use-resource";
 
 type Entity = "accounts" | "incomes" | "obligations" | "transactions";
@@ -81,6 +82,33 @@ function ListBody<T>({
 export default function MoneyPage() {
   const user = useUser();
   const accounts = useList<Account>("accounts");
+  const fx = useResource<Schemas["FxOut"]>("fx", (signal) => api("/fx/latest", { signal }));
+  const [refreshingFx, setRefreshingFx] = useState(false);
+
+  async function refreshFx() {
+    setRefreshingFx(true);
+    setError(null);
+    try {
+      await api("/fx/refresh", { method: "POST" });
+      await fx.reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not refresh exchange rates.");
+    } finally {
+      setRefreshingFx(false);
+    }
+  }
+
+  function inBase(minor: number, currency: string): string | null {
+    const rate = fx.data?.available ? fx.data.rates?.[currency] : undefined;
+    if (currency === user.base_currency || rate === undefined) return null;
+    const value = approxConvert(
+      minor,
+      minorExponent(currency),
+      minorExponent(user.base_currency),
+      String(rate),
+    );
+    return `≈ ${formatMoney(value, user.base_currency)}`;
+  }
   const incomes = useList<Income>("incomes");
   const obligations = useList<Obligation>("obligations");
   const transactions = useList<Transaction>("transactions");
@@ -137,6 +165,24 @@ export default function MoneyPage() {
         </div>
       )}
 
+      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-sm">
+        <span className="font-medium">Exchange rates</span>
+        <span className="text-muted">
+          {fx.data?.available && fx.data.as_of
+            ? `${fx.data.source} · ${formatDate(fx.data.as_of)}. Other currencies are converted to ${user.base_currency} for planning.`
+            : `No recent rates. Amounts in other currencies are left out of planning until rates are available.`}
+        </span>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="ml-auto"
+          loading={refreshingFx}
+          onClick={() => void refreshFx()}
+        >
+          Refresh rates
+        </Button>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card
           title="Accounts"
@@ -159,9 +205,16 @@ export default function MoneyPage() {
                     {!a.include_in_planning && " · excluded from planning"}
                   </p>
                 </div>
-                <p className="ml-auto font-semibold tabular">
-                  {formatMoney(a.balance_minor ?? 0, a.currency)}
-                </p>
+                <div className="ml-auto text-right">
+                  <p className="font-semibold tabular">
+                    {formatMoney(a.balance_minor ?? 0, a.currency)}
+                  </p>
+                  {inBase(a.balance_minor ?? 0, a.currency) && (
+                    <p className="text-xs text-muted tabular">
+                      {inBase(a.balance_minor ?? 0, a.currency)}
+                    </p>
+                  )}
+                </div>
                 <RowActions
                   onEdit={() => setEditing({ entity: "accounts", row: a })}
                   onDelete={() => setDeleting({ entity: "accounts", id: a.id, name: a.name })}

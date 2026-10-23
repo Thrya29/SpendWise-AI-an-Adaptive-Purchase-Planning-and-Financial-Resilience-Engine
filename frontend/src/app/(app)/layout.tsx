@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { AlertsBell } from "@/components/alerts-bell";
 import { Button, cx, LoadingBlock } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 
@@ -55,6 +56,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
+          <AlertsBell />
           <div className="hidden items-center gap-3 sm:flex">
             <span className="max-w-40 truncate text-sm text-muted" title={user.email}>
               {user.display_name}

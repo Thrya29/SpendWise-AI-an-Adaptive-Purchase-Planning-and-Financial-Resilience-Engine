@@ -179,6 +179,7 @@ class PlannedItemCreate(ApiModel):
     url: AnyHttpUrl | None = None
     location: Location | None = None
     notes: Notes | None = None
+    track_price: bool = False
 
     _url = field_validator("url")(_http_url)
 
@@ -206,6 +207,7 @@ class PlannedItemUpdate(ApiModel):
     location: Location | None = None
     notes: Notes | None = None
     purchased_on: date | None = None
+    track_price: bool | None = None
 
     _url = field_validator("url")(_http_url)
 
@@ -230,6 +232,9 @@ class PlannedItemRead(ApiModel):
     location: str | None
     notes: str | None
     purchased_on: date | None
+    track_price: bool
+    last_checked_at: datetime | None
+    last_check_error: str | None
     version: int
     created_at: datetime
     updated_at: datetime

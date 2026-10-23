@@ -41,6 +41,74 @@ export interface paths {
         patch: operations["update_row_api_v1_accounts__obj_id__patch"];
         trace?: never;
     };
+    "/api/v1/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Alerts */
+        get: operations["list_alerts_api_v1_alerts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alerts/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark All Read */
+        post: operations["mark_all_read_api_v1_alerts_read_all_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alerts/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Unread Count */
+        get: operations["unread_count_api_v1_alerts_unread_count_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alerts/{alert_id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark Read */
+        post: operations["mark_read_api_v1_alerts__alert_id__read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/assistant/parse-item": {
         parameters: {
             query?: never;
@@ -146,6 +214,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/fx/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Latest Rates */
+        get: operations["latest_rates_api_v1_fx_latest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fx/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh Rates */
+        post: operations["refresh_rates_api_v1_fx_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/incomes": {
         parameters: {
             query?: never;
@@ -201,6 +303,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/items/{item_id}/price-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check Price */
+        post: operations["check_price_api_v1_items__item_id__price_check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{item_id}/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Price History */
+        get: operations["price_history_api_v1_items__item_id__prices_get"];
+        put?: never;
+        /**
+         * Record Quote
+         * @description Record a price you were quoted (a local shop, a call, a brochure).
+         */
+        post: operations["record_quote_api_v1_items__item_id__prices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{item_id}/prices/{observation_id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Use Observed Price */
+        post: operations["use_observed_price_api_v1_items__item_id__prices__observation_id__apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/items/{obj_id}": {
         parameters: {
             query?: never;
@@ -218,6 +375,26 @@ export interface paths {
         head?: never;
         /** Update Row */
         patch: operations["update_row_api_v1_items__obj_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/market/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Link
+         * @description Read the price a page publishes, without saving anything.
+         */
+        post: operations["preview_link_api_v1_market_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/me": {
@@ -570,6 +747,43 @@ export interface components {
          * @enum {string}
          */
         Action: "buy_now" | "schedule" | "postpone" | "wait_price" | "use_reserve";
+        /** AlertCount */
+        AlertCount: {
+            /** Unread */
+            unread: number;
+        };
+        /**
+         * AlertKind
+         * @enum {string}
+         */
+        AlertKind: "price_target" | "price_drop" | "check_failing" | "back_in_stock";
+        /** AlertOut */
+        AlertOut: {
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Item Id */
+            item_id: string | null;
+            kind: components["schemas"]["AlertKind"];
+            /** Read At */
+            read_at: string | null;
+            /** Title */
+            title: string;
+        };
+        /** ApplyObservationIn */
+        ApplyObservationIn: {
+            /** Version */
+            version: number;
+        };
         /** ApplyRequest */
         ApplyRequest: {
             /**
@@ -597,6 +811,11 @@ export interface components {
             skipped: components["schemas"]["SkippedOut"][];
             status: components["schemas"]["PlanStatus"];
         };
+        /**
+         * Availability
+         * @enum {string}
+         */
+        Availability: "in_stock" | "out_of_stock" | "preorder" | "unknown";
         /** CashEventOut */
         CashEventOut: {
             /** Amount Minor */
@@ -613,6 +832,18 @@ export interface components {
             on: string;
             /** Ref */
             ref: string | null;
+        };
+        /** CheckOut */
+        CheckOut: {
+            /** Applied To Item */
+            applied_to_item: boolean;
+            /** Found */
+            found: boolean;
+            /** Item Version */
+            item_version: number;
+            /** Message */
+            message: string;
+            observation: components["schemas"]["ObservationOut"] | null;
         };
         /** DateChange */
         DateChange: {
@@ -652,6 +883,10 @@ export interface components {
             max_price_minor: number | null;
             /** Name */
             name: string;
+            /** Original Currency */
+            original_currency: string;
+            /** Original Unit Price Minor */
+            original_unit_price_minor: number;
             /** Pay On */
             pay_on: string | null;
             /** Period Label */
@@ -703,6 +938,24 @@ export interface components {
          * @enum {string}
          */
         Frequency: "once" | "weekly" | "monthly" | "quarterly" | "yearly";
+        /** FxOut */
+        FxOut: {
+            /** As Of */
+            as_of: string | null;
+            /** Available */
+            available: boolean;
+            /** Base */
+            base: string;
+            /**
+             * Rates
+             * @description Units of base currency per one unit of each currency
+             */
+            rates?: {
+                [key: string]: string;
+            };
+            /** Source */
+            source: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -968,6 +1221,45 @@ export interface components {
              */
             version: number;
         };
+        /**
+         * ObservationMethod
+         * @enum {string}
+         */
+        ObservationMethod: "json_ld" | "microdata" | "opengraph" | "manual";
+        /** ObservationOut */
+        ObservationOut: {
+            /** Amount Minor */
+            amount_minor: number;
+            availability: components["schemas"]["Availability"];
+            /** Confidence */
+            confidence: string;
+            /** Currency */
+            currency: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            method: components["schemas"]["ObservationMethod"];
+            /** Note */
+            note: string | null;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /** Page Title */
+            page_title: string | null;
+            /** Source Name */
+            source_name: string;
+            /** Url */
+            url: string | null;
+        };
         /** Page[AccountRead] */
         Page_AccountRead_: {
             /** Items */
@@ -1205,6 +1497,11 @@ export interface components {
             /** Target Date */
             target_date?: string | null;
             tier: components["schemas"]["Tier"];
+            /**
+             * Track Price
+             * @default false
+             */
+            track_price: boolean;
             /** Url */
             url?: string | null;
         };
@@ -1226,6 +1523,10 @@ export interface components {
              */
             id: string;
             kind: components["schemas"]["ItemKind"];
+            /** Last Check Error */
+            last_check_error: string | null;
+            /** Last Checked At */
+            last_checked_at: string | null;
             /** Lead Time Days */
             lead_time_days: number;
             /** Location */
@@ -1249,6 +1550,8 @@ export interface components {
             /** Target Date */
             target_date: string | null;
             tier: components["schemas"]["Tier"];
+            /** Track Price */
+            track_price: boolean;
             /**
              * Updated At
              * Format: date-time
@@ -1285,6 +1588,8 @@ export interface components {
             /** Target Date */
             target_date?: string | null;
             tier?: components["schemas"]["Tier"] | null;
+            /** Track Price */
+            track_price?: boolean | null;
             /** Url */
             url?: string | null;
             /**
@@ -1293,11 +1598,40 @@ export interface components {
              */
             version: number;
         };
+        /** PreviewOut */
+        PreviewOut: {
+            availability: components["schemas"]["Availability"];
+            /** Confidence */
+            confidence: ("high" | "medium" | "low") | null;
+            /** Currency */
+            currency: string | null;
+            /** Found */
+            found: boolean;
+            /** Message */
+            message: string;
+            method: components["schemas"]["ObservationMethod"] | null;
+            /** Price Minor */
+            price_minor: number | null;
+            /** Source Name */
+            source_name: string;
+            /** Title */
+            title: string | null;
+            /** Url */
+            url: string;
+        };
+        /** PreviewRequest */
+        PreviewRequest: {
+            /**
+             * Url
+             * Format: uri
+             */
+            url: string;
+        };
         /**
          * PriceSource
          * @enum {string}
          */
-        PriceSource: "user" | "link" | "estimate";
+        PriceSource: "user" | "link" | "estimate" | "quote";
         /** ProfileUpdate */
         ProfileUpdate: {
             /** Address */
@@ -1382,6 +1716,15 @@ export interface components {
             start: string;
             /** Warnings */
             warnings: string[];
+        };
+        /** QuoteIn */
+        QuoteIn: {
+            /** Amount Minor */
+            amount_minor: number;
+            /** Note */
+            note?: string | null;
+            /** Source Name */
+            source_name: string;
         };
         /**
          * Reason
@@ -1793,6 +2136,105 @@ export interface operations {
             };
         };
     };
+    list_alerts_api_v1_alerts_get: {
+        parameters: {
+            query?: {
+                unread?: boolean;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_all_read_api_v1_alerts_read_all_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unread_count_api_v1_alerts_unread_count_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertCount"];
+                };
+            };
+        };
+    };
+    mark_read_api_v1_alerts__alert_id__read_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     parse_item_api_v1_assistant_parse_item_post: {
         parameters: {
             query?: never;
@@ -1979,6 +2421,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    latest_rates_api_v1_fx_latest_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FxOut"];
+                };
+            };
+        };
+    };
+    refresh_rates_api_v1_fx_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FxOut"];
                 };
             };
         };
@@ -2212,6 +2694,141 @@ export interface operations {
             };
         };
     };
+    check_price_api_v1_items__item_id__price_check_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    price_history_api_v1_items__item_id__prices_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObservationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_quote_api_v1_items__item_id__prices_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObservationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    use_observed_price_api_v1_items__item_id__prices__observation_id__apply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                observation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyObservationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlannedItemRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     read_row_api_v1_items__obj_id__get: {
         parameters: {
             query?: never;
@@ -2294,6 +2911,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlannedItemRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_link_api_v1_market_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewOut"];
                 };
             };
             /** @description Validation Error */

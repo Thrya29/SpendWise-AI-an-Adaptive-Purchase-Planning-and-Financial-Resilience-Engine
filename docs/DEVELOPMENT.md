@@ -21,6 +21,7 @@ pytest --cov                       # SQLite by default; set SPENDWISE_DATABASE_U
 export SPENDWISE_DATABASE_URL="sqlite+aiosqlite:///./dev.db"
 alembic upgrade head
 uvicorn app.main:app --reload      # http://127.0.0.1:8000/api/v1/docs
+python -m app.worker               # optional: FX refresh + tracked price checks
 ```
 
 ### Database migrations

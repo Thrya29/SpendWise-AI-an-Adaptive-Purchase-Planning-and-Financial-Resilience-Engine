@@ -34,3 +34,46 @@ def test_upgrade_matches_models_and_downgrade_is_clean(alembic_cfg: Config) -> N
         pytest.fail(f"Models and migrations have drifted: {exc}")
     command.downgrade(alembic_cfg, "base")
     command.upgrade(alembic_cfg, "head")
+
+
+def test_upgrading_a_populated_database_keeps_existing_rows(alembic_cfg: Config) -> None:
+    """New NOT NULL columns must have server defaults, or upgrades fail on real data."""
+    import asyncio  # noqa: PLC0415
+    import uuid  # noqa: PLC0415
+
+    from sqlalchemy import text  # noqa: PLC0415
+    from sqlalchemy.ext.asyncio import create_async_engine  # noqa: PLC0415
+
+    command.upgrade(alembic_cfg, "4b2454350252")  # schema as of Phase 2
+    url = get_settings().database_url
+    user_id, item_id = uuid.uuid4(), uuid.uuid4()
+
+    async def run(sql: str, **params: object) -> list[tuple[object, ...]]:
+        engine = create_async_engine(url)
+        try:
+            async with engine.begin() as conn:
+                result = await conn.execute(text(sql), params)
+                return list(result.fetchall()) if result.returns_rows else []
+        finally:
+            await engine.dispose()
+
+    is_sqlite = url.startswith("sqlite")
+    uid = user_id.hex if is_sqlite else str(user_id)
+    iid = item_id.hex if is_sqlite else str(item_id)
+    asyncio.run(run(
+        "INSERT INTO users (id, email, password_hash, display_name, country, base_currency, "
+        "timezone, reserve_months, reserve_buffer_minor, llm_mode, created_at, updated_at) "
+        "VALUES (:id, 'a@b.c', 'x', 'A', 'IN', 'INR', 'UTC', 2, 0, 'mock', "
+        "CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", id=uid,
+    ))  # fmt: skip
+    asyncio.run(run(
+        "INSERT INTO planned_items (id, user_id, name, tier, kind, status, priority, "
+        "estimated_price_minor, currency, price_source, quantity, deadline_type, lead_time_days, "
+        "version, created_at, updated_at) VALUES (:id, :uid, 'Old item', 'want', 'product', "
+        "'planned', 3, 100, 'INR', 'user', 1, 'soft', 0, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        id=iid, uid=uid,
+    ))  # fmt: skip
+    command.upgrade(alembic_cfg, "head")
+    rows = asyncio.run(run("SELECT name, track_price, failed_checks FROM planned_items"))
+    assert [(r[0], bool(r[1]), r[2]) for r in rows] == [("Old item", False, 0)]
+    command.downgrade(alembic_cfg, "base")

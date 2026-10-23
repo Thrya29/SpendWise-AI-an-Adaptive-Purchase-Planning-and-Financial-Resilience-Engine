@@ -20,7 +20,9 @@ from sqlalchemy import (
     SmallInteger,
     String,
     Text,
+    UniqueConstraint,
     Uuid,
+    false,
 )
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 
@@ -80,6 +82,7 @@ class PriceSource(StrEnum):
     USER = "user"
     LINK = "link"
     ESTIMATE = "estimate"
+    QUOTE = "quote"  # a quote the user recorded, e.g. from a local shop
 
 
 class TxnKind(StrEnum):
@@ -208,6 +211,14 @@ class PlannedItem(IdMixin, TimestampMixin, Owned, Versioned, Base):
     location: Mapped[str | None] = mapped_column(String(200))
     notes: Mapped[str | None] = mapped_column(Text)
     purchased_on: Mapped[date | None] = mapped_column(Date)
+    track_price: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_check_error: Mapped[str | None] = mapped_column(String(300))
+    failed_checks: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, default=0, server_default="0"
+    )
 
     __table_args__ = (
         CheckConstraint("priority BETWEEN 1 AND 5", name="priority_range"),
@@ -268,3 +279,84 @@ class Plan(IdMixin, Owned, Base):
     request: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     result: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ObservationMethod(StrEnum):
+    JSON_LD = "json_ld"
+    MICRODATA = "microdata"
+    OPENGRAPH = "opengraph"
+    MANUAL = "manual"
+
+
+class Availability(StrEnum):
+    IN_STOCK = "in_stock"
+    OUT_OF_STOCK = "out_of_stock"
+    PREORDER = "preorder"
+    UNKNOWN = "unknown"
+
+
+class PriceObservation(IdMixin, Owned, Base):
+    """One price seen for an item, with full provenance. Never edited, only appended."""
+
+    __tablename__ = "price_observations"
+
+    item_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("planned_items.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    amount_minor: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    method: Mapped[ObservationMethod] = mapped_column(_enum(ObservationMethod), nullable=False)
+    confidence: Mapped[str] = mapped_column(String(10), nullable=False)
+    availability: Mapped[Availability] = mapped_column(
+        _enum(Availability), nullable=False, default=Availability.UNKNOWN
+    )
+    source_name: Mapped[str] = mapped_column(String(200), nullable=False)  # domain or shop
+    url: Mapped[str | None] = mapped_column(String(2048))
+    page_title: Mapped[str | None] = mapped_column(String(300))
+    note: Mapped[str | None] = mapped_column(String(300))
+    observed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False, index=True
+    )
+
+    __table_args__ = (CheckConstraint("amount_minor > 0", name="observation_positive"),)
+
+
+class FxRate(IdMixin, Base):
+    """Reference exchange rate: 1 ``pivot`` = ``rate`` ``currency`` on ``rate_date``."""
+
+    __tablename__ = "fx_rates"
+
+    pivot: Mapped[str] = mapped_column(String(3), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    rate: Mapped[str] = mapped_column(String(40), nullable=False)  # exact decimal string
+    rate_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    source: Mapped[str] = mapped_column(String(100), nullable=False)
+    fetched_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("pivot", "currency", "rate_date", name="uq_fx_rates_pair_day"),
+    )
+
+
+class AlertKind(StrEnum):
+    PRICE_TARGET = "price_target"
+    PRICE_DROP = "price_drop"
+    CHECK_FAILING = "check_failing"
+    BACK_IN_STOCK = "back_in_stock"
+
+
+class Alert(IdMixin, Owned, Base):
+    __tablename__ = "alerts"
+
+    item_id: Mapped[UUID | None] = mapped_column(
+        Uuid, ForeignKey("planned_items.id", ondelete="CASCADE"), index=True
+    )
+    kind: Mapped[AlertKind] = mapped_column(_enum(AlertKind), nullable=False)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    body: Mapped[str] = mapped_column(String(1000), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False, index=True
+    )
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

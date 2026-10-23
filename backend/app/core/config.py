@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     login_rate_limit_per_minute: int = Field(default=10, ge=1)
     max_page_size: int = Field(default=200, ge=1, le=1000)
 
+    fx_url: str = "https://api.frankfurter.dev/v1/latest"
+    # Background worker cadence
+    price_check_hours: int = Field(default=12, ge=1, le=168)
+    fx_refresh_hours: int = Field(default=6, ge=1, le=48)
+
     @model_validator(mode="after")
     def _forbid_insecure_production(self) -> Settings:
         if self.environment == "production":

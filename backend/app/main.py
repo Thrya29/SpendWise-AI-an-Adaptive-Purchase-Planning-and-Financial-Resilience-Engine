@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, finance, health, me, planner, projection
+from app.api.routes import auth, finance, health, market, me, planner, projection
 from app.core.config import get_settings
 from app.core.db import dispose_engine
 from app.core.errors import install_error_handlers
@@ -47,7 +47,7 @@ def create_app() -> FastAPI:
     )
     install_error_handlers(app)
     app.include_router(health.router)
-    for module in (auth, me, finance, projection, planner):
+    for module in (auth, me, finance, projection, planner, market):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(planner.assistant_router, prefix=API_PREFIX)
     return app

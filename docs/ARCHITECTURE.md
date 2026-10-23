@@ -164,8 +164,29 @@ service.py ── picks the user's provider ──► anthropic_provider.py (use
   number not present in those facts is rejected. If a protected scenario breaks the reserve even
   with no purchases, the summary says so, and it never claims safety for that scenario.
 
-## 11. What comes next
+## 11. Market data (`backend/app/market/`, `services/market_service.py`, `services/fx_service.py`)
 
-Phase 3 adds market intelligence: link ingestion with source provenance, price history, FX and
-alerts. Prices then carry a source and timestamp, and the planner's `cost_i` can become a price
-*forecast* `p_i(t)` (Phase 4).
+Policy and alternatives: [ADR 0006](adr/0006-market-data-provenance.md).
+
+```
+link ─► fetcher.py (SSRF guard, robots.txt, caps) ─► extract.py (JSON-LD / microdata / OpenGraph)
+                                                        │
+              PriceObservation (append-only, full provenance) ◄─┘
+                │ track_price on, or "Use this price" ─► PlannedItem.estimated_price_minor
+                └ alert rules ─► Alert (price target, ≥5% drop, back in stock, failing checks)
+
+ECB reference rates (daily) ─► FxRate rows ─► RateTable ─► Converter used by projection & planner
+```
+
+* **Worker** (`python -m app.worker`, same image, `worker` service in Compose): every minute it
+  refreshes FX if the last fetch is over 6 hours old, then checks up to 20 tracked items due for a
+  check (12-hour cadence), at least 10 s apart per site. Each check is its own transaction.
+* **Conversion** happens once, in `load_planning_inputs`. Projections and plans receive base-currency
+  amounts plus a note for every conversion. Plan decisions also keep the item's original price and
+  currency for display.
+
+## 12. What comes next
+
+Phase 4 turns the price history into **forecasts**: the probability of reaching a target price
+within N days, with calibrated uncertainty. It also adds discovery of alternative products, so
+the planner's cost can become a distribution `p_i(t)` instead of a single number.

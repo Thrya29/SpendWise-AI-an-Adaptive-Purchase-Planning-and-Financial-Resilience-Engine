@@ -39,6 +39,7 @@ async def client(tmp_path: Path) -> AsyncIterator[httpx.AsyncClient]:
     app = create_app()
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as c:
+        c.app = app  # type: ignore[attr-defined]  # lets tests override dependencies
         yield c
     await db_module.dispose_engine()
 

@@ -91,7 +91,11 @@ def _changes(item: PlannedItem, d: Decision, pay_on: date | None = None) -> Item
 
 
 def _facts(
-    result: PlanResult, items: dict[str, PlannedItem], horizon: int, warnings: list[str]
+    result: PlanResult,
+    items: dict[str, PlannedItem],
+    unit_prices: dict[str, int],
+    horizon: int,
+    warnings: list[str],
 ) -> PlanFacts:
     cur = result.currency
 
@@ -101,9 +105,7 @@ def _facts(
     def names(decisions: list[Decision]) -> list[str]:
         return [items[d.ref].name for d in decisions]
 
-    planned_total = sum(
-        items[d.ref].estimated_price_minor * items[d.ref].quantity for d in by(*_SCHEDULING)
-    )
+    planned_total = sum(unit_prices[d.ref] * items[d.ref].quantity for d in by(*_SCHEDULING))
     return PlanFacts(
         currency=cur,
         horizon_months=horizon,
@@ -139,18 +141,27 @@ async def create_plan(session: AsyncSession, user: User, req: PlanRequest, today
     )
     warnings = list(inputs.warnings)
     items: dict[str, PlannedItem] = {}
+    unit_prices: dict[str, int] = {}
     plan_items: list[PlanItem] = []
     for row in rows:
-        if row.currency != cur:
-            warnings.append(f"Item '{row.name}' ({row.currency}) not planned: currency differs.")
+        unit = Money(row.estimated_price_minor, row.currency)
+        converted, note = inputs.converter.convert(unit, f"Item '{row.name}'")
+        if note:
+            warnings.append(note)
+        if converted is None:
             continue
+        cap = row.max_price_minor
+        if cap is not None and row.currency != cur:
+            cap_money, _ = inputs.converter.convert(Money(cap, row.currency), "cap")
+            cap = cap_money.amount_minor if cap_money else None
         items[str(row.id)] = row
+        unit_prices[str(row.id)] = converted.amount_minor
         plan_items.append(
             PlanItem(
                 ref=str(row.id), name=row.name, tier=row.tier.value, priority=row.priority,
-                unit_price=row.estimated_price_minor, quantity=row.quantity,
+                unit_price=converted.amount_minor, quantity=row.quantity,
                 deadline=row.deadline_type.value, target_date=row.target_date,
-                lead_time_days=row.lead_time_days, max_price=row.max_price_minor,
+                lead_time_days=row.lead_time_days, max_price=cap,
             )
         )  # fmt: skip
     if len(plan_items) > 300:
@@ -207,8 +218,10 @@ async def create_plan(session: AsyncSession, user: User, req: PlanRequest, today
             DecisionOut(
                 item_id=row.id, item_version=row.version, name=row.name, tier=row.tier,
                 kind=row.kind, priority=row.priority, quantity=row.quantity,
-                unit_price_minor=row.estimated_price_minor,
-                cost_minor=row.estimated_price_minor * row.quantity,
+                unit_price_minor=unit_prices[d.ref],
+                cost_minor=unit_prices[d.ref] * row.quantity,
+                original_currency=row.currency,
+                original_unit_price_minor=row.estimated_price_minor,
                 current_target_date=row.target_date, deadline_type=row.deadline_type,
                 action=d.action, reason=d.reason,
                 period_label=period_label.get(d.period) if d.period is not None else None,
@@ -223,7 +236,9 @@ async def create_plan(session: AsyncSession, user: User, req: PlanRequest, today
             )
         )  # fmt: skip
 
-    summary = await ai.summarize_plan(user, _facts(result, items, req.horizon_months, warnings))
+    summary = await ai.summarize_plan(
+        user, _facts(result, items, unit_prices, req.horizon_months, warnings)
+    )
     planned_spend = sum(d.cost_minor for d in decisions if d.action in _SCHEDULING)
     plan = Plan(
         user_id=user.id,

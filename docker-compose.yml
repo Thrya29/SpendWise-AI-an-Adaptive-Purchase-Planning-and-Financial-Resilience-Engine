@@ -61,6 +61,24 @@ services:
     security_opt: ["no-new-privileges:true"]
     networks: [backend, frontend]
 
+  worker:
+    # Same image as the API: refreshes exchange rates and re-checks tracked prices.
+    build:
+      context: ./backend
+    command: ["python", "-m", "app.worker"]
+    restart: unless-stopped
+    environment:
+      <<: *api-env
+      SPENDWISE_RUN_MIGRATIONS: "false"  # the api service owns migrations
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      disable: true
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    networks: [backend]
+
   web:
     build:
       context: ./frontend
