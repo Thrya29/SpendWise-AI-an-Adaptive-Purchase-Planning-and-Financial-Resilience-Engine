@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { describeChanges, explain, hasChanges, type Decision } from "./planner";
 
+// Pin the locale: Node picks it up from the machine, which differs between laptops and CI.
+const L = "en-IN";
+
 function decision(overrides: Partial<Decision>): Decision {
   return {
     item_id: "i1",
@@ -34,16 +37,20 @@ function decision(overrides: Partial<Decision>): Decision {
 
 describe("explain", () => {
   it("covers every action with engine numbers only", () => {
-    expect(explain(decision({ action: "buy_now" }), "INR")).toBe("Safe to buy today.");
-    expect(explain(decision({}), "INR")).toBe("Pay on 20 Nov 2026 to have it by your target date.");
-    expect(explain(decision({ late: true, pay_on: "2027-01-02" }), "INR")).toMatch(
+    expect(explain(decision({ action: "buy_now" }), "INR", L)).toBe("Safe to buy today.");
+    expect(explain(decision({}), "INR", L)).toBe(
+      "Pay on 20 Nov 2026 to have it by your target date.",
+    );
+    expect(explain(decision({ late: true, pay_on: "2027-01-02" }), "INR", L)).toMatch(
       /Earliest safe date is 2 Jan 2027, after your target date/,
     );
-    expect(explain(decision({ current_target_date: null }), "INR")).toBe("Safe from 20 Nov 2026.");
+    expect(explain(decision({ current_target_date: null }), "INR", L)).toBe(
+      "Safe from 20 Nov 2026.",
+    );
     expect(
-      explain(decision({ action: "use_reserve", alternative_pay_on: "2026-11-02" }), "INR"),
+      explain(decision({ action: "use_reserve", alternative_pay_on: "2026-11-02" }), "INR", L),
     ).toMatch(/dips into your reserve\. Or wait until 2 Nov 2026/);
-    expect(explain(decision({ action: "use_reserve" }), "INR")).toMatch(/no later date/);
+    expect(explain(decision({ action: "use_reserve" }), "INR", L)).toMatch(/no later date/);
     const postponed = decision({
       action: "postpone",
       reason: "not_affordable",
@@ -51,14 +58,18 @@ describe("explain", () => {
       shortfall_on: "2026-11-01",
       shortfall_scenario: "As expected",
     });
-    expect(explain(postponed, "INR")).toMatch(
+    expect(explain(postponed, "INR", L)).toMatch(
       /Needs ₹4,80,000\.00 more .* by 1 Nov 2026 \(As expected\)/,
     );
-    expect(explain({ ...postponed, reason: "outranked" }, "INR")).toMatch(/Higher-priority items/);
-    expect(explain(decision({ action: "wait_price", max_price_minor: 2_000_000 }), "INR")).toMatch(
-      /above your limit of ₹20,000\.00/,
+    expect(explain({ ...postponed, reason: "outranked" }, "INR", L)).toMatch(
+      /Higher-priority items/,
     );
-    expect(explain(decision({ action: "wait_price" }), "INR")).toBe("Waiting for a lower price.");
+    expect(
+      explain(decision({ action: "wait_price", max_price_minor: 2_000_000 }), "INR", L),
+    ).toMatch(/above your limit of ₹20,000\.00/);
+    expect(explain(decision({ action: "wait_price" }), "INR", L)).toBe(
+      "Waiting for a lower price.",
+    );
   });
 });
 
@@ -72,11 +83,11 @@ describe("changes", () => {
       alternative_changes: { target_date: { from: null, to: "2026-12-02" }, status: null },
     });
     expect(hasChanges(d)).toBe(true);
-    expect(describeChanges(d)).toEqual([
+    expect(describeChanges(d, false, L)).toEqual([
       "Target date: none → 20 Nov 2026",
       "Status: postponed → planned",
     ]);
-    expect(describeChanges(d, true)).toEqual(["Target date: none → 2 Dec 2026"]);
+    expect(describeChanges(d, true, L)).toEqual(["Target date: none → 2 Dec 2026"]);
     expect(hasChanges(decision({}))).toBe(false);
   });
 });

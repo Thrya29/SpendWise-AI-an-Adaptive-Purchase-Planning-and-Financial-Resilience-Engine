@@ -15,7 +15,7 @@ concurrency:
 jobs:
   backend:
     name: Backend (lint, types, tests on PostgreSQL)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend
@@ -31,8 +31,8 @@ jobs:
           --health-cmd "pg_isready -U spendwise" --health-interval 5s
           --health-timeout 3s --health-retries 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -57,13 +57,13 @@ jobs:
 
   frontend:
     name: Frontend (lint, types, unit tests, build)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
@@ -75,14 +75,19 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - name: Unit tests under another locale (catches machine-dependent formatting)
+        run: npm test
+        env:
+          LANG: de_DE.UTF-8
+          LC_ALL: de_DE.UTF-8
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high
 
   docker:
     name: Docker images build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [backend, frontend]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: docker build -t spendwise-api ./backend
       - run: docker build -t spendwise-web ./frontend

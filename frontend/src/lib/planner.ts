@@ -15,8 +15,10 @@ export const ACTION_GROUPS: { action: Action; title: string; hint: string }[] = 
 ]; // prettier-ignore
 
 /** One plain-language sentence explaining a decision. All numbers come from the engine. */
-export function explain(d: Decision, currency: string): string {
-  const pay = d.pay_on ? formatDate(d.pay_on) : "";
+export function explain(d: Decision, currency: string, locale?: string): string {
+  const date = (iso: string) => formatDate(iso, locale);
+  const money = (minor: number) => formatMoney(minor, currency, { locale });
+  const pay = d.pay_on ? date(d.pay_on) : "";
   switch (d.action) {
     case "buy_now":
       return "Safe to buy today.";
@@ -27,13 +29,13 @@ export function explain(d: Decision, currency: string): string {
         : `Safe from ${pay}.`;
     case "use_reserve": {
       const alt = d.alternative_pay_on
-        ? ` Or wait until ${formatDate(d.alternative_pay_on)} to keep the reserve intact.`
+        ? ` Or wait until ${date(d.alternative_pay_on)} to keep the reserve intact.`
         : " There is no later date within this horizon that keeps the reserve intact.";
       return `Paying on ${pay} meets the deadline but dips into your reserve.${alt}`;
     }
     case "postpone": {
-      const gap = formatMoney(d.shortfall_minor ?? 0, currency);
-      const when = d.shortfall_on ? ` by ${formatDate(d.shortfall_on)}` : "";
+      const gap = money(d.shortfall_minor ?? 0);
+      const when = d.shortfall_on ? ` by ${date(d.shortfall_on)}` : "";
       const scenario = d.shortfall_scenario ? ` (${d.shortfall_scenario})` : "";
       return d.reason === "outranked"
         ? `Higher-priority items use the available money first. Needs ${gap} more headroom${when}${scenario}.`
@@ -41,7 +43,7 @@ export function explain(d: Decision, currency: string): string {
     }
     case "wait_price":
       return d.max_price_minor != null
-        ? `Price ${formatMoney(d.unit_price_minor, currency)} is above your limit of ${formatMoney(d.max_price_minor, currency)}.`
+        ? `Price ${money(d.unit_price_minor)} is above your limit of ${money(d.max_price_minor)}.`
         : "Waiting for a lower price.";
   }
 }
@@ -51,12 +53,12 @@ export function hasChanges(d: Decision): boolean {
 }
 
 /** Human-readable preview of what applying will change, e.g. ["Target date: 15 Dec 2026 → 2 Jan 2027"]. */
-export function describeChanges(d: Decision, useAlternative = false): string[] {
+export function describeChanges(d: Decision, useAlternative = false, locale?: string): string[] {
   const changes = useAlternative && d.alternative_changes ? d.alternative_changes : d.changes;
   const out: string[] = [];
   if (changes.target_date) {
-    const from = changes.target_date.from ? formatDate(changes.target_date.from) : "none";
-    out.push(`Target date: ${from} → ${formatDate(changes.target_date.to)}`);
+    const from = changes.target_date.from ? formatDate(changes.target_date.from, locale) : "none";
+    out.push(`Target date: ${from} → ${formatDate(changes.target_date.to, locale)}`);
   }
   if (changes.status) out.push(`Status: ${changes.status.from} → ${changes.status.to}`);
   return out;
