@@ -9,6 +9,33 @@ import { DEADLINES, ITEM_KINDS, ITEM_STATUSES, TIERS, type Tier } from "@/lib/la
 import { CURRENCIES, minorToInput, parseToMinor } from "@/lib/money";
 
 type Item = Schemas["PlannedItemRead"];
+type Draft = Schemas["ItemDraftOut"];
+
+/** Initial field values, from a saved item or an assistant draft. */
+type Initial = Partial<
+  Pick<
+    Item,
+    | "name" | "tier" | "kind" | "priority" | "estimated_price_minor" | "currency" | "quantity"
+    | "target_date" | "deadline_type" | "lead_time_days" | "max_price_minor" | "url" | "location"
+    | "notes"
+  >
+>; // prettier-ignore
+
+function fromDraft(d: Draft): Initial {
+  return {
+    name: d.name,
+    tier: d.tier,
+    kind: d.kind,
+    priority: d.priority,
+    estimated_price_minor: d.estimated_price_minor ?? undefined,
+    currency: d.currency,
+    quantity: d.quantity,
+    target_date: d.target_date,
+    deadline_type: d.deadline_type,
+    lead_time_days: d.lead_time_days,
+    location: d.location,
+  };
+}
 
 const PRIORITIES = [
   { value: "5", label: "5 — Critical" },
@@ -20,18 +47,21 @@ const PRIORITIES = [
 
 export function ItemForm({
   item,
+  draft,
   defaultTier,
   baseCurrency,
   onSaved,
   onCancel,
 }: {
   item?: Item;
+  draft?: Draft;
   defaultTier?: Tier;
   baseCurrency: string;
   onSaved: (item: Item) => void;
   onCancel: () => void;
 }) {
-  const [currency, setCurrency] = useState(item?.currency ?? baseCurrency);
+  const init: Initial | undefined = item ?? (draft ? fromDraft(draft) : undefined);
+  const [currency, setCurrency] = useState(init?.currency ?? baseCurrency);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -104,7 +134,7 @@ export function ItemForm({
         hint="A product, a service like a salon visit, a trip…"
       >
         {(p) => (
-          <Input {...p} name="name" defaultValue={item?.name} required maxLength={200} autoFocus />
+          <Input {...p} name="name" defaultValue={init?.name} required maxLength={200} autoFocus />
         )}
       </Field>
 
@@ -114,7 +144,7 @@ export function ItemForm({
             <Select
               {...p}
               name="tier"
-              defaultValue={item?.tier ?? defaultTier ?? "want"}
+              defaultValue={init?.tier ?? defaultTier ?? "want"}
               options={TIERS.map((t) => ({ value: t.value, label: t.label.replace(/s$/, "") }))}
             />
           )}
@@ -124,7 +154,7 @@ export function ItemForm({
             <Select
               {...p}
               name="kind"
-              defaultValue={item?.kind ?? "product"}
+              defaultValue={init?.kind ?? "product"}
               options={ITEM_KINDS}
             />
           )}
@@ -134,7 +164,7 @@ export function ItemForm({
             <Select
               {...p}
               name="priority"
-              defaultValue={String(item?.priority ?? 3)}
+              defaultValue={String(init?.priority ?? 3)}
               options={PRIORITIES}
             />
           )}
@@ -148,7 +178,11 @@ export function ItemForm({
               {...p}
               name="price"
               currency={currency}
-              defaultValue={item ? minorToInput(item.estimated_price_minor, item.currency) : ""}
+              defaultValue={
+                init?.estimated_price_minor != null
+                  ? minorToInput(init.estimated_price_minor, currency)
+                  : ""
+              }
               required
             />
           )}
@@ -172,7 +206,7 @@ export function ItemForm({
               type="number"
               min={1}
               max={1000}
-              defaultValue={item?.quantity ?? 1}
+              defaultValue={init?.quantity ?? 1}
             />
           )}
         </Field>
@@ -181,7 +215,7 @@ export function ItemForm({
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label="Target date" error={errors.target_date} hint="When you aim to have it">
           {(p) => (
-            <Input {...p} name="target_date" type="date" defaultValue={item?.target_date ?? ""} />
+            <Input {...p} name="target_date" type="date" defaultValue={init?.target_date ?? ""} />
           )}
         </Field>
         <Field label="Deadline" error={errors.deadline_type}>
@@ -189,7 +223,7 @@ export function ItemForm({
             <Select
               {...p}
               name="deadline_type"
-              defaultValue={item?.deadline_type ?? "soft"}
+              defaultValue={init?.deadline_type ?? "soft"}
               options={DEADLINES.map((d) => ({ value: d.value, label: `${d.label} — ${d.hint}` }))}
             />
           )}
@@ -206,7 +240,7 @@ export function ItemForm({
               type="number"
               min={0}
               max={365}
-              defaultValue={item?.lead_time_days ?? 0}
+              defaultValue={init?.lead_time_days ?? 0}
             />
           )}
         </Field>
@@ -221,7 +255,7 @@ export function ItemForm({
               type="url"
               inputMode="url"
               placeholder="https://"
-              defaultValue={item?.url ?? ""}
+              defaultValue={init?.url ?? ""}
             />
           )}
         </Field>
@@ -236,9 +270,7 @@ export function ItemForm({
               name="max_price"
               currency={currency}
               defaultValue={
-                item?.max_price_minor != null
-                  ? minorToInput(item.max_price_minor, item.currency)
-                  : ""
+                init?.max_price_minor != null ? minorToInput(init.max_price_minor, currency) : ""
               }
             />
           )}
@@ -252,7 +284,7 @@ export function ItemForm({
           hint="e.g. a local salon, a city"
         >
           {(p) => (
-            <Input {...p} name="location" maxLength={200} defaultValue={item?.location ?? ""} />
+            <Input {...p} name="location" maxLength={200} defaultValue={init?.location ?? ""} />
           )}
         </Field>
         {item && (
@@ -265,7 +297,7 @@ export function ItemForm({
       </div>
 
       <Field label="Notes" error={errors.notes}>
-        {(p) => <Textarea {...p} name="notes" maxLength={5000} defaultValue={item?.notes ?? ""} />}
+        {(p) => <Textarea {...p} name="notes" maxLength={5000} defaultValue={init?.notes ?? ""} />}
       </Field>
 
       <div className="mt-2 flex justify-end gap-2">

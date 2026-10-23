@@ -41,6 +41,26 @@ export interface paths {
         patch: operations["update_row_api_v1_accounts__obj_id__patch"];
         trace?: never;
     };
+    "/api/v1/assistant/parse-item": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Parse Item
+         * @description Turn a note like "salon visit next month around 1500" into a draft item to review.
+         */
+        post: operations["parse_item_api_v1_assistant_parse_item_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -332,6 +352,81 @@ export interface paths {
         patch: operations["update_row_api_v1_obligations__obj_id__patch"];
         trace?: never;
     };
+    "/api/v1/planner/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Plans */
+        get: operations["list_plans_api_v1_planner_plans_get"];
+        put?: never;
+        /**
+         * Create Plan
+         * @description Solve for the best purchase schedule. Nothing changes until the plan is applied.
+         */
+        post: operations["create_plan_api_v1_planner_plans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planner/plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Plan */
+        get: operations["read_plan_api_v1_planner_plans__plan_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planner/plans/{plan_id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply Plan
+         * @description Apply the approved changes (target dates and statuses) to your items.
+         */
+        post: operations["apply_plan_api_v1_planner_plans__plan_id__apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planner/plans/{plan_id}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Discard Plan */
+        post: operations["discard_plan_api_v1_planner_plans__plan_id__discard_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projection": {
         parameters: {
             query?: never;
@@ -470,6 +565,38 @@ export interface components {
              */
             version: number;
         };
+        /**
+         * Action
+         * @enum {string}
+         */
+        Action: "buy_now" | "schedule" | "postpone" | "wait_price" | "use_reserve";
+        /** ApplyRequest */
+        ApplyRequest: {
+            /**
+             * Allow Reserve
+             * @description Required to apply decisions that dip into the reserve
+             * @default false
+             */
+            allow_reserve: boolean;
+            /**
+             * Item Ids
+             * @description Apply only these items' changes (default: all)
+             */
+            item_ids?: string[] | null;
+        };
+        /** ApplyResponse */
+        ApplyResponse: {
+            /** Applied */
+            applied: string[];
+            /**
+             * Plan Id
+             * Format: uuid
+             */
+            plan_id: string;
+            /** Skipped */
+            skipped: components["schemas"]["SkippedOut"][];
+            status: components["schemas"]["PlanStatus"];
+        };
         /** CashEventOut */
         CashEventOut: {
             /** Amount Minor */
@@ -487,11 +614,65 @@ export interface components {
             /** Ref */
             ref: string | null;
         };
+        /** DateChange */
+        DateChange: {
+            /** From */
+            from: string | null;
+            /** To */
+            to: string | null;
+        };
         /**
          * DeadlineType
          * @enum {string}
          */
         DeadlineType: "hard" | "soft" | "none";
+        /** DecisionOut */
+        DecisionOut: {
+            action: components["schemas"]["Action"];
+            alternative_changes?: components["schemas"]["ItemChanges"] | null;
+            /** Alternative Pay On */
+            alternative_pay_on: string | null;
+            changes: components["schemas"]["ItemChanges"];
+            /** Cost Minor */
+            cost_minor: number;
+            /** Current Target Date */
+            current_target_date: string | null;
+            deadline_type: components["schemas"]["DeadlineType"];
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Item Version */
+            item_version: number;
+            kind: components["schemas"]["ItemKind"];
+            /** Late */
+            late: boolean;
+            /** Max Price Minor */
+            max_price_minor: number | null;
+            /** Name */
+            name: string;
+            /** Pay On */
+            pay_on: string | null;
+            /** Period Label */
+            period_label: string | null;
+            /** Priority */
+            priority: number;
+            /** Quantity */
+            quantity: number;
+            reason: components["schemas"]["Reason"];
+            /** Requires Reserve Approval */
+            requires_reserve_approval: boolean;
+            /** Shortfall Minor */
+            shortfall_minor: number | null;
+            /** Shortfall On */
+            shortfall_on: string | null;
+            /** Shortfall Scenario */
+            shortfall_scenario: string | null;
+            tier: components["schemas"]["Tier"];
+            /** Unit Price Minor */
+            unit_price_minor: number;
+        };
         /** DeleteAccountRequest */
         DeleteAccountRequest: {
             /** Password */
@@ -610,6 +791,42 @@ export interface components {
              * @description Current version for optimistic concurrency
              */
             version: number;
+        };
+        /** ItemChanges */
+        ItemChanges: {
+            status?: components["schemas"]["StatusChange"] | null;
+            target_date?: components["schemas"]["DateChange"] | null;
+        };
+        /** ItemDraftOut */
+        ItemDraftOut: {
+            /** Currency */
+            currency: string;
+            deadline_type: components["schemas"]["DeadlineType"];
+            /** Estimated Price Minor */
+            estimated_price_minor: number | null;
+            kind: components["schemas"]["ItemKind"];
+            /** Lead Time Days */
+            lead_time_days: number;
+            /** Location */
+            location: string | null;
+            /** Missing */
+            missing: string[];
+            /** Name */
+            name: string;
+            /** Notice */
+            notice: string | null;
+            /** Priority */
+            priority: number;
+            /** Quantity */
+            quantity: number;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "mock" | "anthropic";
+            /** Target Date */
+            target_date: string | null;
+            tier: components["schemas"]["Tier"];
         };
         /**
          * ItemKind
@@ -806,6 +1023,11 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** ParseItemRequest */
+        ParseItemRequest: {
+            /** Text */
+            text: string;
+        };
         /** PasswordChange */
         PasswordChange: {
             /** Current Password */
@@ -813,6 +1035,120 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /** PeriodOut */
+        PeriodOut: {
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Index */
+            index: number;
+            /** Label */
+            label: string;
+            /**
+             * Safe Day
+             * Format: date
+             */
+            safe_day: string;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+        };
+        /** PlanListItem */
+        PlanListItem: {
+            /** Changes */
+            changes: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decisions */
+            decisions: number;
+            /** Horizon Months */
+            horizon_months: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            status: components["schemas"]["PlanStatus"];
+        };
+        /** PlanOut */
+        PlanOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Decisions */
+            decisions: components["schemas"]["DecisionOut"][];
+            /** Horizon Months */
+            horizon_months: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Periods */
+            periods: components["schemas"]["PeriodOut"][];
+            /** Planned Spend Minor */
+            planned_spend_minor: number;
+            /** Reserve Required Minor */
+            reserve_required_minor: number;
+            /** Scenarios */
+            scenarios: components["schemas"]["ScenarioOut"][];
+            solver: components["schemas"]["SolverOut"];
+            /**
+             * Stale
+             * @default false
+             */
+            stale: boolean;
+            status: components["schemas"]["PlanStatus"];
+            /** Summary */
+            summary: string;
+            /** Summary Notice */
+            summary_notice: string | null;
+            /**
+             * Summary Source
+             * @enum {string}
+             */
+            summary_source: "mock" | "anthropic";
+            /** Warnings */
+            warnings: string[];
+        };
+        /** PlanRequest */
+        PlanRequest: {
+            /** Emergencies */
+            emergencies?: components["schemas"]["EmergencyIn"][];
+            /**
+             * Horizon Months
+             * @default 6
+             */
+            horizon_months: number;
+            /**
+             * Include Postponed
+             * @default true
+             */
+            include_postponed: boolean;
+            /**
+             * Protect
+             * @description Income shocks the plan must survive
+             */
+            protect?: components["schemas"]["ShockIn"][];
+            /** Reserve Months */
+            reserve_months?: number | null;
+        };
+        /**
+         * PlanStatus
+         * @enum {string}
+         */
+        PlanStatus: "draft" | "applied" | "discarded";
         /** PlannedCheckOut */
         PlannedCheckOut: {
             /** Amount Minor */
@@ -1047,6 +1383,11 @@ export interface components {
             /** Warnings */
             warnings: string[];
         };
+        /**
+         * Reason
+         * @enum {string}
+         */
+        Reason: "safe" | "on_target" | "late" | "above_max_price" | "not_affordable" | "outranked" | "needs_reserve";
         /** RegisterRequest */
         RegisterRequest: {
             /** Address */
@@ -1072,6 +1413,24 @@ export interface components {
              */
             timezone: string;
         };
+        /** ScenarioOut */
+        ScenarioOut: {
+            /** First Negative On */
+            first_negative_on: string | null;
+            /** First Reserve Breach On */
+            first_reserve_breach_on: string | null;
+            /** Min Balance Minor */
+            min_balance_minor: number;
+            /**
+             * Min Balance On
+             * Format: date
+             */
+            min_balance_on: string;
+            /** Name */
+            name: string;
+            /** Reserve Breached Without Purchases */
+            reserve_breached_without_purchases: boolean;
+        };
         /** ShockIn */
         ShockIn: {
             /** @default delayed */
@@ -1089,6 +1448,30 @@ export interface components {
          * @enum {string}
          */
         ShockMode: "delayed" | "lost";
+        /** SkippedOut */
+        SkippedOut: {
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Reason */
+            reason: string;
+        };
+        /** SolverOut */
+        SolverOut: {
+            /** Objective */
+            objective: number;
+            /** Solve Ms */
+            solve_ms: number;
+            /** Status */
+            status: string;
+        };
+        /** StatusChange */
+        StatusChange: {
+            from: components["schemas"]["ItemStatus"];
+            to: components["schemas"]["ItemStatus"];
+        };
         /**
          * Tier
          * @enum {string}
@@ -1397,6 +1780,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    parse_item_api_v1_assistant_parse_item_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ParseItemRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemDraftOut"];
                 };
             };
             /** @description Validation Error */
@@ -2198,6 +2614,165 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ObligationRead"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_plans_api_v1_planner_plans_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanListItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_plan_api_v1_planner_plans_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_plan_api_v1_planner_plans__plan_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_plan_api_v1_planner_plans__plan_id__apply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    discard_plan_api_v1_planner_plans__plan_id__discard_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -244,3 +244,27 @@ class AuditEvent(IdMixin, Owned, Base):
     action: Mapped[str] = mapped_column(String(20), nullable=False)
     changes: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class PlanStatus(StrEnum):
+    DRAFT = "draft"
+    APPLIED = "applied"
+    DISCARDED = "discarded"
+
+
+class Plan(IdMixin, Owned, Base):
+    """A planner run. Drafts can be applied only while the user's data is unchanged."""
+
+    __tablename__ = "plans"
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False, index=True
+    )
+    status: Mapped[PlanStatus] = mapped_column(
+        _enum(PlanStatus), nullable=False, default=PlanStatus.DRAFT
+    )
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    horizon_months: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    request: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    result: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

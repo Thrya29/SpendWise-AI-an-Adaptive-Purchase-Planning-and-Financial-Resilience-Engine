@@ -189,6 +189,83 @@
         "title": "AccountUpdate",
         "type": "object"
       },
+      "Action": {
+        "enum": [
+          "buy_now",
+          "schedule",
+          "postpone",
+          "wait_price",
+          "use_reserve"
+        ],
+        "title": "Action",
+        "type": "string"
+      },
+      "ApplyRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "allow_reserve": {
+            "default": false,
+            "description": "Required to apply decisions that dip into the reserve",
+            "title": "Allow Reserve",
+            "type": "boolean"
+          },
+          "item_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 300,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Apply only these items' changes (default: all)",
+            "title": "Item Ids"
+          }
+        },
+        "title": "ApplyRequest",
+        "type": "object"
+      },
+      "ApplyResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "applied": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Applied",
+            "type": "array"
+          },
+          "plan_id": {
+            "format": "uuid",
+            "title": "Plan Id",
+            "type": "string"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/SkippedOut"
+            },
+            "title": "Skipped",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PlanStatus"
+          }
+        },
+        "required": [
+          "plan_id",
+          "status",
+          "applied",
+          "skipped"
+        ],
+        "title": "ApplyResponse",
+        "type": "object"
+      },
       "CashEventOut": {
         "additionalProperties": false,
         "properties": {
@@ -235,6 +312,41 @@
         "title": "CashEventOut",
         "type": "object"
       },
+      "DateChange": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From"
+          },
+          "to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "title": "DateChange",
+        "type": "object"
+      },
       "DeadlineType": {
         "enum": [
           "hard",
@@ -243,6 +355,195 @@
         ],
         "title": "DeadlineType",
         "type": "string"
+      },
+      "DecisionOut": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/Action"
+          },
+          "alternative_changes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ItemChanges"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "alternative_pay_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alternative Pay On"
+          },
+          "changes": {
+            "$ref": "#/components/schemas/ItemChanges"
+          },
+          "cost_minor": {
+            "title": "Cost Minor",
+            "type": "integer"
+          },
+          "current_target_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Target Date"
+          },
+          "deadline_type": {
+            "$ref": "#/components/schemas/DeadlineType"
+          },
+          "item_id": {
+            "format": "uuid",
+            "title": "Item Id",
+            "type": "string"
+          },
+          "item_version": {
+            "title": "Item Version",
+            "type": "integer"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ItemKind"
+          },
+          "late": {
+            "title": "Late",
+            "type": "boolean"
+          },
+          "max_price_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Price Minor"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "pay_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pay On"
+          },
+          "period_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Label"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "integer"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/Reason"
+          },
+          "requires_reserve_approval": {
+            "title": "Requires Reserve Approval",
+            "type": "boolean"
+          },
+          "shortfall_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortfall Minor"
+          },
+          "shortfall_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortfall On"
+          },
+          "shortfall_scenario": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortfall Scenario"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/Tier"
+          },
+          "unit_price_minor": {
+            "title": "Unit Price Minor",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "item_id",
+          "item_version",
+          "name",
+          "tier",
+          "kind",
+          "priority",
+          "quantity",
+          "unit_price_minor",
+          "cost_minor",
+          "current_target_date",
+          "deadline_type",
+          "action",
+          "reason",
+          "period_label",
+          "pay_on",
+          "late",
+          "shortfall_minor",
+          "shortfall_scenario",
+          "shortfall_on",
+          "alternative_pay_on",
+          "max_price_minor",
+          "requires_reserve_approval",
+          "changes"
+        ],
+        "title": "DecisionOut",
+        "type": "object"
       },
       "DeleteAccountRequest": {
         "properties": {
@@ -581,6 +882,145 @@
           "version"
         ],
         "title": "IncomeUpdate",
+        "type": "object"
+      },
+      "ItemChanges": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StatusChange"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target_date": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DateChange"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "ItemChanges",
+        "type": "object"
+      },
+      "ItemDraftOut": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "deadline_type": {
+            "$ref": "#/components/schemas/DeadlineType"
+          },
+          "estimated_price_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Price Minor"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ItemKind"
+          },
+          "lead_time_days": {
+            "title": "Lead Time Days",
+            "type": "integer"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "integer"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "source": {
+            "enum": [
+              "mock",
+              "anthropic"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "target_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Date"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/Tier"
+          }
+        },
+        "required": [
+          "name",
+          "tier",
+          "kind",
+          "priority",
+          "estimated_price_minor",
+          "currency",
+          "quantity",
+          "target_date",
+          "deadline_type",
+          "lead_time_days",
+          "location",
+          "missing",
+          "source",
+          "notice"
+        ],
+        "title": "ItemDraftOut",
         "type": "object"
       },
       "ItemKind": {
@@ -1108,6 +1548,22 @@
         "title": "Page[TransactionRead]",
         "type": "object"
       },
+      "ParseItemRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "maxLength": 500,
+            "minLength": 2,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "ParseItemRequest",
+        "type": "object"
+      },
       "PasswordChange": {
         "additionalProperties": false,
         "properties": {
@@ -1130,6 +1586,253 @@
         ],
         "title": "PasswordChange",
         "type": "object"
+      },
+      "PeriodOut": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "safe_day": {
+            "format": "date",
+            "title": "Safe Day",
+            "type": "string"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "label",
+          "start",
+          "end",
+          "safe_day"
+        ],
+        "title": "PeriodOut",
+        "type": "object"
+      },
+      "PlanListItem": {
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "title": "Changes",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decisions": {
+            "title": "Decisions",
+            "type": "integer"
+          },
+          "horizon_months": {
+            "title": "Horizon Months",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PlanStatus"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "status",
+          "horizon_months",
+          "decisions",
+          "changes"
+        ],
+        "title": "PlanListItem",
+        "type": "object"
+      },
+      "PlanOut": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionOut"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "horizon_months": {
+            "title": "Horizon Months",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "periods": {
+            "items": {
+              "$ref": "#/components/schemas/PeriodOut"
+            },
+            "title": "Periods",
+            "type": "array"
+          },
+          "planned_spend_minor": {
+            "title": "Planned Spend Minor",
+            "type": "integer"
+          },
+          "reserve_required_minor": {
+            "title": "Reserve Required Minor",
+            "type": "integer"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioOut"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          },
+          "solver": {
+            "$ref": "#/components/schemas/SolverOut"
+          },
+          "stale": {
+            "default": false,
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PlanStatus"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "summary_notice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary Notice"
+          },
+          "summary_source": {
+            "enum": [
+              "mock",
+              "anthropic"
+            ],
+            "title": "Summary Source",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "status",
+          "horizon_months",
+          "currency",
+          "reserve_required_minor",
+          "planned_spend_minor",
+          "summary",
+          "summary_source",
+          "summary_notice",
+          "solver",
+          "scenarios",
+          "periods",
+          "decisions",
+          "warnings"
+        ],
+        "title": "PlanOut",
+        "type": "object"
+      },
+      "PlanRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "emergencies": {
+            "items": {
+              "$ref": "#/components/schemas/EmergencyIn"
+            },
+            "maxItems": 10,
+            "title": "Emergencies",
+            "type": "array"
+          },
+          "horizon_months": {
+            "default": 6,
+            "maximum": 24.0,
+            "minimum": 1.0,
+            "title": "Horizon Months",
+            "type": "integer"
+          },
+          "include_postponed": {
+            "default": true,
+            "title": "Include Postponed",
+            "type": "boolean"
+          },
+          "protect": {
+            "description": "Income shocks the plan must survive",
+            "items": {
+              "$ref": "#/components/schemas/ShockIn"
+            },
+            "maxItems": 3,
+            "title": "Protect",
+            "type": "array"
+          },
+          "reserve_months": {
+            "anyOf": [
+              {
+                "maximum": 24.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reserve Months"
+          }
+        },
+        "title": "PlanRequest",
+        "type": "object"
+      },
+      "PlanStatus": {
+        "enum": [
+          "draft",
+          "applied",
+          "discarded"
+        ],
+        "title": "PlanStatus",
+        "type": "string"
       },
       "PlannedCheckOut": {
         "additionalProperties": false,
@@ -1970,6 +2673,19 @@
         "title": "ProjectionResponse",
         "type": "object"
       },
+      "Reason": {
+        "enum": [
+          "safe",
+          "on_target",
+          "late",
+          "above_max_price",
+          "not_affordable",
+          "outranked",
+          "needs_reserve"
+        ],
+        "title": "Reason",
+        "type": "string"
+      },
       "RegisterRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2039,6 +2755,62 @@
         "title": "RegisterRequest",
         "type": "object"
       },
+      "ScenarioOut": {
+        "additionalProperties": false,
+        "properties": {
+          "first_negative_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Negative On"
+          },
+          "first_reserve_breach_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Reserve Breach On"
+          },
+          "min_balance_minor": {
+            "title": "Min Balance Minor",
+            "type": "integer"
+          },
+          "min_balance_on": {
+            "format": "date",
+            "title": "Min Balance On",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "reserve_breached_without_purchases": {
+            "title": "Reserve Breached Without Purchases",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "min_balance_minor",
+          "min_balance_on",
+          "first_reserve_breach_on",
+          "first_negative_on",
+          "reserve_breached_without_purchases"
+        ],
+        "title": "ScenarioOut",
+        "type": "object"
+      },
       "ShockIn": {
         "additionalProperties": false,
         "properties": {
@@ -2079,6 +2851,67 @@
         ],
         "title": "ShockMode",
         "type": "string"
+      },
+      "SkippedOut": {
+        "additionalProperties": false,
+        "properties": {
+          "item_id": {
+            "format": "uuid",
+            "title": "Item Id",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "item_id",
+          "reason"
+        ],
+        "title": "SkippedOut",
+        "type": "object"
+      },
+      "SolverOut": {
+        "additionalProperties": false,
+        "properties": {
+          "objective": {
+            "title": "Objective",
+            "type": "integer"
+          },
+          "solve_ms": {
+            "title": "Solve Ms",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "solve_ms",
+          "objective"
+        ],
+        "title": "SolverOut",
+        "type": "object"
+      },
+      "StatusChange": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "$ref": "#/components/schemas/ItemStatus"
+          },
+          "to": {
+            "$ref": "#/components/schemas/ItemStatus"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "title": "StatusChange",
+        "type": "object"
       },
       "Tier": {
         "enum": [
@@ -2743,6 +3576,53 @@
         "summary": "Update Row",
         "tags": [
           "accounts"
+        ]
+      }
+    },
+    "/api/v1/assistant/parse-item": {
+      "post": {
+        "description": "Turn a note like \"salon visit next month around 1500\" into a draft item to review.",
+        "operationId": "parse_item_api_v1_assistant_parse_item_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParseItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemDraftOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Parse Item",
+        "tags": [
+          "assistant"
         ]
       }
     },
@@ -3973,6 +4853,253 @@
         "summary": "Update Row",
         "tags": [
           "obligations"
+        ]
+      }
+    },
+    "/api/v1/planner/plans": {
+      "get": {
+        "operationId": "list_plans_api_v1_planner_plans_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlanListItem"
+                  },
+                  "title": "Response List Plans Api V1 Planner Plans Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Plans",
+        "tags": [
+          "planner"
+        ]
+      },
+      "post": {
+        "description": "Solve for the best purchase schedule. Nothing changes until the plan is applied.",
+        "operationId": "create_plan_api_v1_planner_plans_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Plan",
+        "tags": [
+          "planner"
+        ]
+      }
+    },
+    "/api/v1/planner/plans/{plan_id}": {
+      "get": {
+        "operationId": "read_plan_api_v1_planner_plans__plan_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Plan Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Plan",
+        "tags": [
+          "planner"
+        ]
+      }
+    },
+    "/api/v1/planner/plans/{plan_id}/apply": {
+      "post": {
+        "description": "Apply the approved changes (target dates and statuses) to your items.",
+        "operationId": "apply_plan_api_v1_planner_plans__plan_id__apply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Plan Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Apply Plan",
+        "tags": [
+          "planner"
+        ]
+      }
+    },
+    "/api/v1/planner/plans/{plan_id}/discard": {
+      "post": {
+        "operationId": "discard_plan_api_v1_planner_plans__plan_id__discard_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Plan Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Discard Plan",
+        "tags": [
+          "planner"
         ]
       }
     },

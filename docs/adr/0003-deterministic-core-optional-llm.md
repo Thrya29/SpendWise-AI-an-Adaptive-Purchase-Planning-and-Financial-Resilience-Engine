@@ -11,8 +11,12 @@ calculators, and not every user has, or wants, an API key.
 * All balances, projections, schedules and reserve checks are plain, tested Python.
 * LLM access goes through a provider interface with two implementations: a deterministic **mock**
   (rules and templates, the default, needs no network) and **Anthropic Claude** using the user's
-  own key. *Status:* the per-user choice and encrypted key storage are implemented; the providers
-  ship with the first AI features (natural-language item intake, plan explanations) in Phase 2.
+  own key. Both are implemented (`backend/app/ai/`). Claude calls use structured JSON-schema output, are
+  re-validated with Pydantic, and opt into server-side refusal fallbacks. Any failure (rejected key,
+  rate limit, refusal, malformed output) falls back to the built-in assistant with a notice.
+* **Numbers never come from the model.** Item prices are returned as decimal strings and converted
+  to minor units in our code. A plan summary is rejected if it contains any number that is not
+  already in the engine's facts, and the deterministic summary is used instead.
 * User API keys are encrypted at rest (Fernet, server-held key), shown only as the last four
   characters, and can be deleted at any time.
 * LLM output is validated against typed schemas, never executes actions directly, and plan changes

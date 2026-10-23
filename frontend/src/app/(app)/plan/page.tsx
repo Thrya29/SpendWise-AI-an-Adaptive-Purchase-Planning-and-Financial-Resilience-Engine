@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { ItemForm } from "@/components/item-form";
+import { DraftBanner, QuickAdd } from "@/components/quick-add";
 import {
   Alert,
   Badge,
@@ -45,6 +46,11 @@ export default function PlanPage() {
   const [tier, setTier] = useState<Tier | "all">("all");
   const [status, setStatus] = useState<ItemStatus | "">("planned");
   const [editing, setEditing] = useState<Item | "new" | null>(null);
+  const [draft, setDraft] = useState<Schemas["ItemDraftOut"] | null>(null);
+  const closeEditor = () => {
+    setEditing(null);
+    setDraft(null);
+  };
   const [deleting, setDeleting] = useState<Item | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -105,6 +111,15 @@ export default function PlanPage() {
         description="Everything you plan to spend on — products, services, travel or experiences."
         actions={<Button onClick={() => setEditing("new")}>Add item</Button>}
       />
+
+      <div className="mb-5">
+        <QuickAdd
+          onDraft={(d) => {
+            setDraft(d);
+            setEditing("new");
+          }}
+        />
+      </div>
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div
@@ -281,18 +296,20 @@ export default function PlanPage() {
 
       <Dialog
         open={editing !== null}
-        onClose={() => setEditing(null)}
+        onClose={closeEditor}
         title={editing === "new" ? "Add a need, want or desire" : "Edit item"}
         wide
       >
+        {editing === "new" && draft && <DraftBanner draft={draft} />}
         {editing !== null && (
           <ItemForm
             item={editing === "new" ? undefined : editing}
+            draft={editing === "new" ? (draft ?? undefined) : undefined}
             defaultTier={tier === "all" ? undefined : tier}
             baseCurrency={user.base_currency}
-            onCancel={() => setEditing(null)}
+            onCancel={closeEditor}
             onSaved={() => {
-              setEditing(null);
+              closeEditor();
               void items.reload();
             }}
           />

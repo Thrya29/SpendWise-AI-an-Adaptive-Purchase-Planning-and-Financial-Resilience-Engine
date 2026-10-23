@@ -124,10 +124,48 @@ gets the item there in time.
 * The API refuses to start in production with default secrets, short JWT secrets or insecure
   cookies.
 
-## 9. What comes next
+## 9. Purchase planner (`backend/app/domain/planner.py`)
 
-The **Phase 2 planner** turns the projection into decisions. Each planned item gets a buy-in-period
-variable `x[i,t]`, solved with OR-Tools CP-SAT to maximise priority-weighted value minus cost and
-risk. It is subject to the projection's cash-flow constraints in every protected scenario, the
-reserve, deadlines (with lead time), and replacement or alternative links. The output is a diff of
-**buy now / wait / postpone** that the user approves before anything changes.
+A robust scheduling problem solved with OR-Tools CP-SAT. The full formulation, alternatives and
+consequences are in [ADR 0005](adr/0005-robust-purchase-scheduling.md). In short:
+
+* **Decision:** `x[i,t]`, buy item *i* in period *t* (the rest of this month, then calendar months
+  up to today + horizon), or postpone.
+* **Safety:** in every protected scenario (as expected, plus chosen shocks such as "salary 2 months
+  late") and on every record-low day, cumulative spending ≤ the day's low balance − the reserve.
+* **Objective:** priority-weighted value. Needs count for more than wants, and wants more than
+  desires; value decays when an item is late or bought needlessly early.
+* **Consent:** a hard-deadline need that only fits on time by using the reserve is proposed as
+  `use_reserve` with its reserve-safe alternative date. Applying without approval uses the safe
+  date.
+* **Output:** one decision per item (`buy_now`, `schedule`, `postpone`, `wait_price`,
+  `use_reserve`) with a reason, the exact shortfall for postponed items, and a preview of the item
+  changes that applying would make.
+
+```
+POST /planner/plans          solve and save a draft (nothing changes yet)
+GET  /planner/plans/{id}     re-read it; "stale": true once any underlying data changes
+POST /planner/plans/{id}/apply   {item_ids?, allow_reserve}; 409 if stale or already applied
+POST /assistant/parse-item   free text -> draft item for the user to review
+```
+
+## 10. Assistant layer (`backend/app/ai/`)
+
+```
+service.py ── picks the user's provider ──► anthropic_provider.py (user's key, Claude)
+     │                                   └► mock.py (rules + templates, offline)
+     └── any provider failure → mock, with a notice shown to the user
+```
+
+* **Item intake:** a JSON schema constrains Claude's output, which is then re-validated. Prices
+  come back as decimal strings and our code converts them. The mock parses "75k", "1.2 lakh",
+  "₹1,500", "next month", "15 Dec", "this weekend", tiers, types, priority and quantity.
+* **Plan summaries:** written from engine-computed facts only. A Claude summary containing any
+  number not present in those facts is rejected. If a protected scenario breaks the reserve even
+  with no purchases, the summary says so, and it never claims safety for that scenario.
+
+## 11. What comes next
+
+Phase 3 adds market intelligence: link ingestion with source provenance, price history, FX and
+alerts. Prices then carry a source and timestamp, and the planner's `cost_i` can become a price
+*forecast* `p_i(t)` (Phase 4).

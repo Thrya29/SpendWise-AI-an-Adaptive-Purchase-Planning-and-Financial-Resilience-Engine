@@ -19,7 +19,9 @@ emergency reserve, and what happens if your **salary is delayed** or an **emerge
 | **Money** | Accounts with live balances, recurring income (weekly/monthly/quarterly/yearly/one-off), recurring expenses flagged as essential or discretionary, and one-off transactions. |
 | **Emergency reserve** | A configurable reserve (N months of essentials + a buffer) that plans must never spend. |
 | **What-if simulator** | Projects the balance day by day for 3–24 months. You can apply a **salary delay** (paid late as arrears) or **salary loss** for N months, plus an **unexpected expense**. You see when you'd dip into the reserve or run out, and which planned purchases stay safe. |
-| **AI assistant mode** | Each user chooses a built-in deterministic assistant (no API key needed) or **their own Claude API key**, which is stored encrypted and never shown again. The setting and secure key storage are done; the AI features that use it (natural-language item entry, plan explanations) arrive in Phase 2. The app works fully with no LLM. |
+| **Purchase planner** | Chooses the best month and day to buy each item, or postpones it, so your balance never drops below your reserve, **even if salary is late or lost** (you choose which shocks to guard against). It is an exact constraint solver (OR-Tools CP-SAT), not a heuristic. Every decision has a reason: postponed items show the exact extra money needed and by when. Nothing changes until you approve, and using the reserve always needs explicit consent. |
+| **"Describe it" entry** | Type *"work laptop for 75k by 15 Dec, must have"* and the assistant fills in the form for you to review. |
+| **AI assistant mode** | Each user chooses the built-in assistant (offline, no API key) or **their own Claude API key**, which is stored encrypted and never shown again. AI only reads text and writes summaries. It never does the math: a summary containing any number the engine didn't produce is rejected. Any AI failure falls back to the built-in assistant. |
 | **Account & privacy** | Sign-up with country, city, address and timezone; password change; full JSON data export; permanent account deletion. |
 
 ### Worked example (it's a regression test)
@@ -43,7 +45,7 @@ Browser ──► Next.js (UI + same-origin /api proxy) ──► FastAPI ──
 * **Typed contract.** The frontend's TypeScript types are generated from the API's OpenAPI schema,
   and CI fails if they drift.
 
-Full design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Decisions: [docs/adr/](docs/adr/) ·
+Full design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Planner: [ADR 0005](docs/adr/0005-robust-purchase-scheduling.md) · Decisions: [docs/adr/](docs/adr/) ·
 Security: [docs/SECURITY.md](docs/SECURITY.md)
 
 ## Run it
@@ -69,8 +71,8 @@ Every push runs in CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
 |---|---|
 | ruff lint + format · mypy `--strict` | ESLint (0 warnings) · Prettier · `tsc` |
 | pytest on **SQLite and PostgreSQL 16** | Vitest unit tests |
-| Property-based tests (Hypothesis) for money invariants | Production `next build` |
-| Coverage gate ≥ 85% (currently ~96%) | Generated API types must match the schema |
+| Property-based tests (Hypothesis): money invariants, and *no plan ever breaks the reserve* | Production `next build` |
+| Coverage gate ≥ 85% (currently ~97%) | Generated API types must match the schema |
 | Migration ↔ model drift check + up/down round-trip | `npm audit` on production deps |
 | `pip-audit` on the locked runtime deps | Docker images must build |
 
@@ -78,7 +80,8 @@ Warnings are treated as errors in the backend test suite.
 
 ## Tech stack
 
-**Backend:** Python 3.12 · FastAPI · SQLAlchemy 2 (async) · Alembic · Pydantic v2 · Argon2 · PyJWT ·
+**Backend:** Python 3.12 · FastAPI · SQLAlchemy 2 (async) · Alembic · Pydantic v2 · OR-Tools CP-SAT ·
+Anthropic SDK (optional, user's own key) · Argon2 · PyJWT ·
 PostgreSQL 16 · Redis 7  
 **Frontend:** Next.js 16 (App Router, standalone output) · React 19 · TypeScript (strict) ·
 Tailwind CSS 4 · Recharts  
@@ -92,8 +95,8 @@ Built in phases. Each phase ships tested and documented before the next begins.
 |---|---|---|
 | 0 | Foundation: repo, CI, Docker, auth, security baseline | ✅ Done |
 | 1 | Ledger, needs/wants/desires CRUD, cash-flow projection, salary-delay & emergency scenarios | ✅ Done |
-| 2 | Purchase **scheduling optimizer** (constraint solver): buy now / wait / postpone, with approval-based replanning | ⏳ Next |
-| 3 | Market intelligence: link ingestion with source provenance, price history, FX, alerts | Planned |
+| 2 | Purchase **scheduling optimizer** (CP-SAT): buy now / schedule / postpone / wait for price / use reserve with consent; replanning; AI item entry and summaries (built-in or Claude) | ✅ Done |
+| 3 | Market intelligence: link ingestion with source provenance, price history, FX, alerts | ⏳ Next |
 | 4 | Price forecasting with calibrated uncertainty; alternative-product discovery | Planned |
 | 5 | Savings & investment education: runway, FD vs. liquid, mutual-fund NAVs, gold (all sourced and timestamped) | Planned |
 | 6 | Research benchmark: planner vs. baseline budgeting rules under simulated shocks | Planned |

@@ -18,6 +18,7 @@ vulnerability** on this repository. Do not open a public issue.
 | Network | Only the web container is published, on 127.0.0.1; API, DB and Redis are on private networks |
 | Containers | Non-root users, read-only root filesystems, `no-new-privileges`, health checks |
 | Input | Strict Pydantic schemas (`extra="forbid"`), URL scheme validation, LIKE-wildcard escaping, 1 MB proxy body cap, proxy path-traversal rejection |
+| AI | Optional and per user; keys encrypted at rest (Fernet) and never returned; assistant and planner rate-limited per user (20 and 30 per minute); model output schema-constrained and re-validated; user text treated as data, not instructions; numbers in summaries must come from the engine; every failure falls back to the offline assistant |
 | Privacy | Minimal data collection; full JSON export; permanent account deletion (cascading) |
 | Supply chain | Locked runtime Python dependencies + `pip-audit`; `npm audit` on production dependencies in CI |
 
