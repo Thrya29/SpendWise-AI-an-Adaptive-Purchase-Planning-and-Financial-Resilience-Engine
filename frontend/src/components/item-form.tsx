@@ -12,7 +12,7 @@ type Item = Schemas["PlannedItemRead"];
 type Draft = Schemas["ItemDraftOut"];
 
 /** Initial field values, from a saved item or an assistant draft. */
-type Initial = Partial<
+export type ItemPrefill = Partial<
   Pick<
     Item,
     | "name" | "tier" | "kind" | "priority" | "estimated_price_minor" | "currency" | "quantity"
@@ -22,7 +22,7 @@ type Initial = Partial<
   >
 >; // prettier-ignore
 
-function fromDraft(d: Draft): Initial {
+function fromDraft(d: Draft): ItemPrefill {
   return {
     name: d.name,
     tier: d.tier,
@@ -49,6 +49,7 @@ const PRIORITIES = [
 export function ItemForm({
   item,
   draft,
+  prefill,
   defaultTier,
   baseCurrency,
   onSaved,
@@ -56,12 +57,13 @@ export function ItemForm({
 }: {
   item?: Item;
   draft?: Draft;
+  prefill?: ItemPrefill;
   defaultTier?: Tier;
   baseCurrency: string;
   onSaved: (item: Item) => void;
   onCancel: () => void;
 }) {
-  const init: Initial | undefined = item ?? (draft ? fromDraft(draft) : undefined);
+  const init: ItemPrefill | undefined = item ?? prefill ?? (draft ? fromDraft(draft) : undefined);
   const [currency, setCurrency] = useState(init?.currency ?? baseCurrency);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);

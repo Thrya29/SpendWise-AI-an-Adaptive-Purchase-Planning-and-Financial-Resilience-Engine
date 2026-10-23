@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from typing import Annotated
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import httpx
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import func, select, update
 
+from app.ai import service as ai_service
+from app.ai.formatting import format_amount
 from app.api.deps import SessionDep, UserDep, user_today
 from app.core.db import utcnow
 from app.core.errors import DomainValidationError, NotFoundError
@@ -18,15 +20,19 @@ from app.schemas.finance import PlannedItemRead
 from app.schemas.market import (
     AlertCount,
     AlertOut,
+    AlternativesOut,
+    AlternativeSuggestion,
     ApplyObservationIn,
     CheckOut,
+    ForecastOut,
     FxOut,
+    LinkAlternativeIn,
     ObservationOut,
     PreviewOut,
     PreviewRequest,
     QuoteIn,
 )
-from app.services import fx_service, market_service
+from app.services import forecast_service, fx_service, market_service
 from app.services.repository import OwnedRepository
 
 router = APIRouter(tags=["market"])
@@ -180,4 +186,91 @@ async def mark_all_read(user: UserDep, session: SessionDep) -> None:
         update(Alert)
         .where(Alert.user_id == user.id, Alert.read_at.is_(None))
         .values(read_at=utcnow())
+    )
+
+
+@router.get("/items/{item_id}/forecast", response_model=ForecastOut)
+async def item_forecast(
+    item_id: UUID,
+    user: UserDep,
+    session: SessionDep,
+    target_minor: Annotated[int | None, Query(gt=0, le=10**15)] = None,
+    horizon_days: Annotated[int | None, Query(ge=1, le=365)] = None,
+) -> ForecastOut:
+    """Chance of the price reaching a target within a horizon, from this item's history."""
+    item = await _item(session, user, item_id)
+    return await forecast_service.item_forecast(
+        session, item, user_today(user), target=target_minor, horizon_days=horizon_days
+    )
+
+
+async def _group_members(session: SessionDep, user: UserDep, group: UUID) -> list[PlannedItem]:
+    return list(
+        await session.scalars(
+            select(PlannedItem)
+            .where(PlannedItem.user_id == user.id, PlannedItem.alternative_group == group)
+            .order_by(PlannedItem.created_at)
+        )
+    )
+
+
+@router.post("/items/{item_id}/alternatives", response_model=list[PlannedItemRead])
+async def link_alternative(
+    item_id: UUID, body: LinkAlternativeIn, user: UserDep, session: SessionDep
+) -> list[PlannedItemRead]:
+    """Mark two items as alternatives; the planner will buy at most one of the group."""
+    if body.other_item_id == item_id:
+        raise DomainValidationError("An item cannot be an alternative to itself.")
+    repo = OwnedRepository(session, PlannedItem, user.id)
+    first, second = await repo.get(item_id), await repo.get(body.other_item_id)
+    group = first.alternative_group or second.alternative_group or uuid4()
+    to_move = {first.id, second.id}
+    old_groups = {
+        g for g in (first.alternative_group, second.alternative_group) if g is not None
+    } - {group}
+    for old in old_groups:
+        to_move |= {m.id for m in await _group_members(session, user, old)}  # merge groups
+    for member_id in to_move:
+        member = await repo.get(member_id)
+        if member.alternative_group != group:
+            await repo.update(member.id, member.version, {"alternative_group": group})
+    return [PlannedItemRead.model_validate(m) for m in await _group_members(session, user, group)]
+
+
+@router.delete("/items/{item_id}/alternatives", status_code=status.HTTP_204_NO_CONTENT)
+async def unlink_alternative(item_id: UUID, user: UserDep, session: SessionDep) -> None:
+    repo = OwnedRepository(session, PlannedItem, user.id)
+    item = await repo.get(item_id)
+    group = item.alternative_group
+    if group is None:
+        return
+    await repo.update(item.id, item.version, {"alternative_group": None})
+    remaining = await _group_members(session, user, group)
+    if len(remaining) == 1:  # a group of one is not a choice
+        await repo.update(remaining[0].id, remaining[0].version, {"alternative_group": None})
+
+
+@router.post("/items/{item_id}/alternatives/search", response_model=AlternativesOut)
+async def search_alternatives(item_id: UUID, user: UserDep, session: SessionDep) -> AlternativesOut:
+    """Current alternatives via Claude web search (your key); every link is verified."""
+    item = await _item(session, user, item_id)
+    await enforce(f"alternatives:{user.id}", limit=5, window_seconds=3600)
+    budget = format_amount(item.max_price_minor or item.estimated_price_minor, item.currency)
+    found, dropped, message = await ai_service.find_alternatives(
+        user, name=item.name, kind=item.kind.value, country=user.country, budget=budget
+    )
+    return AlternativesOut(
+        available=bool(found),
+        message=message,
+        dropped_unverified=dropped,
+        suggestions=[
+            AlternativeSuggestion(
+                name=s.name,
+                url=s.url,
+                why=s.why,
+                price_text=s.price_text,
+                source_name=market_service.source_name(s.url),
+            )
+            for s in found
+        ],
     )

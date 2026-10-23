@@ -233,6 +233,7 @@ class PlannedItemRead(ApiModel):
     notes: str | None
     purchased_on: date | None
     track_price: bool
+    alternative_group: UUID | None
     last_checked_at: datetime | None
     last_check_error: str | None
     version: int

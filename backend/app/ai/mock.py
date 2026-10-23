@@ -297,7 +297,12 @@ class MockAssistant:
         if not parts:
             parts.append("There is nothing to plan yet.")
         safe = [n for n in facts.scenario_names if n not in facts.unsafe_anyway]
-        if safe:
+        if facts.reserve_zero:
+            parts.append(
+                "You have no emergency reserve set up. Add your rent and essential bills, or "
+                "a safety buffer in Settings, so plans protect money for emergencies."
+            )
+        elif safe:
             parts.append(
                 f"Every scheduled purchase keeps your {facts.reserve} reserve intact in "
                 f"{_join(safe)}"

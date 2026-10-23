@@ -25,6 +25,7 @@ items_st = st.lists(
         target_date=st.one_of(st.none(), st.dates(date(2026, 3, 1), date(2027, 3, 1))),
         lead_time_days=st.integers(0, 30),
         max_price=st.one_of(st.none(), st.integers(0, 3_000_000)),
+        group=st.sampled_from([None, None, "g1", "g2"]),
     ),
     max_size=8,
     unique_by=lambda i: i.ref,
@@ -82,3 +83,14 @@ def test_scheduled_purchases_never_breach_reserve(
             assert d.pay_on is not None and d.pay_on >= TODAY
         if d.action is Action.USE_RESERVE:
             assert it.tier == "need" and it.deadline == "hard"
+        if d.action is Action.ALTERNATIVE:
+            winner = by_ref[d.chosen_alternative]
+            assert (
+                winner.pay_on is not None
+                and next(i for i in items if i.ref == d.chosen_alternative).group == it.group
+            )
+
+    buying = (Action.BUY_NOW, Action.SCHEDULE, Action.USE_RESERVE)
+    for group in ("g1", "g2"):
+        members = [i for i in items if i.group == group]
+        assert sum(by_ref[i.ref].action in buying for i in members) <= 1

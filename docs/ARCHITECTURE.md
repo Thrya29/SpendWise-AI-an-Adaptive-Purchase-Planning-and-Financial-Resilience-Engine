@@ -185,8 +185,24 @@ ECB reference rates (daily) ─► FxRate rows ─► RateTable ─► Converter
   amounts plus a note for every conversion. Plan decisions also keep the item's original price and
   currency for display.
 
-## 12. What comes next
+## 12. Forecasting and alternatives
 
-Phase 4 turns the price history into **forecasts**: the probability of reaching a target price
-within N days, with calibrated uncertainty. It also adds discovery of alternative products, so
-the planner's cost can become a distribution `p_i(t)` instead of a single number.
+* **Forecasts** (`domain/forecast.py`, [ADR 0007](adr/0007-price-drop-forecasting.md)): the chance
+  of the price reaching a target within H days, from Poisson-modelled drop episodes in the item's
+  own history. `GET /items/{id}/forecast` defaults to the item's maximum price (or 10% off) and
+  the time until it must be paid for.
+* **Calibration** (`research/forecast_calibration.py`): a reproducible synthetic backtest. A
+  smaller version runs in CI as a regression guard.
+* **Alternatives groups** (`planned_items.alternative_group`): the CP-SAT model adds one
+  at-most-one constraint across every period variable of a group's members. Members not chosen
+  get the decision `alternative` with the chosen item's ID. A fallback bought while a
+  higher-ranked member waits for a price gets a `group_note` stating the trade-off.
+* **Finding alternatives**: Claude with the `web_search_20260209` server tool (`pause_turn` is
+  resumed up to 3 times). A suggestion is kept only if its page appears among that request's
+  search results. Suggested products open the item form **without a price**.
+
+## 13. What comes next
+
+Phase 5 adds savings and investment *education*: runway, FD vs. liquid comparisons, mutual-fund NAVs
+and gold, all sourced and timestamped. It stays strictly within explanation and simulation, with
+no individual recommendations to buy securities.

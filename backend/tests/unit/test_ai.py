@@ -229,3 +229,111 @@ async def test_service_uses_mock_by_default_and_falls_back(monkeypatch: pytest.M
     monkeypatch.setattr(AnthropicAssistant, "summarize_plan", good)
     s = await service.summarize_plan(claude_user, facts())
     assert (s.value, s.source, s.notice) == ("Claude summary", "anthropic", None)
+
+
+# ---------- Alternatives search (web search server tool) ----------
+def search_reply(urls: list[str], text: str, stop: str = "end_turn") -> Any:
+    results = [SimpleNamespace(type="web_search_result", url=u, title="t") for u in urls]
+    return SimpleNamespace(
+        stop_reason=stop,
+        content=[
+            SimpleNamespace(type="server_tool_use", name="web_search"),
+            SimpleNamespace(type="web_search_tool_result", content=results),
+            SimpleNamespace(type="text", text=text),
+        ],
+    )
+
+
+class Sequenced(FakeMessages):
+    def __init__(self, outcomes: list[Any]) -> None:
+        super().__init__(None)
+        self.outcomes = outcomes
+
+    async def create(self, **kwargs: Any) -> Any:
+        self.calls.append(kwargs)
+        return self.outcomes.pop(0)
+
+
+async def test_alternatives_keep_only_urls_returned_by_the_search() -> None:
+    text = json.dumps([
+        {"name": "Pixel 11", "url": "https://shop.example/pixel-11/", "why": "Newer chip",
+         "price_text": "₹74,999"},
+        {"name": "Made-up X", "url": "https://invented.example/x", "why": "Hallucinated"},
+        {"name": "Bad", "url": "ftp://nope", "why": "Wrong scheme"},
+        "not an object",
+    ])  # fmt: skip
+    msgs = Sequenced([search_reply(["https://www.shop.example/pixel-11"], "Here:\n" + text)])
+    client = SimpleNamespace(beta=SimpleNamespace(messages=msgs))
+    found, dropped = await AnthropicAssistant("k", client=client).find_alternatives(
+        name="Pixel 10", kind="product", country="IN", budget="₹80,000"
+    )
+    assert [f.name for f in found] == ["Pixel 11"] and dropped == 1
+    tool = msgs.calls[0]["tools"][0]
+    assert tool["type"] == "web_search_20260209" and tool["max_uses"] == 5
+    assert "format" not in msgs.calls[0]["output_config"]  # citations + structured output clash
+
+
+async def test_alternatives_resume_after_pause_turn_and_handle_failures() -> None:
+    paused = search_reply(["https://a.example/one"], "", stop="pause_turn")
+    final = search_reply(["https://b.example/two"], json.dumps([
+        {"name": "One", "url": "https://a.example/one", "why": "w"},
+        {"name": "Two", "url": "https://b.example/two", "why": "w"},
+    ]))  # fmt: skip
+    msgs = Sequenced([paused, final])
+    found, _ = await AnthropicAssistant("k", client=SimpleNamespace(
+        beta=SimpleNamespace(messages=msgs))).find_alternatives(
+        name="x", kind="product", country="IN", budget="1")  # fmt: skip
+    assert {f.name for f in found} == {"One", "Two"}  # URLs from both turns count
+    second = msgs.calls[1]["messages"]
+    assert [m["role"] for m in second] == ["user", "assistant"]  # resumed, no extra prompt
+
+    endless = Sequenced([search_reply([], "", stop="pause_turn")] * 4)
+    with pytest.raises(AssistantUnavailableError, match="too long"):
+        await AnthropicAssistant("k", client=SimpleNamespace(
+            beta=SimpleNamespace(messages=endless))).find_alternatives(
+            name="x", kind="product", country="IN", budget="1")  # fmt: skip
+
+    refused = Sequenced([search_reply([], "", stop="refusal")])
+    with pytest.raises(AssistantUnavailableError, match="declined"):
+        await AnthropicAssistant("k", client=SimpleNamespace(
+            beta=SimpleNamespace(messages=refused))).find_alternatives(
+            name="x", kind="product", country="IN", budget="1")  # fmt: skip
+
+    garbage = Sequenced([search_reply(["https://a.example/one"], "no json here")])
+    found, dropped = await AnthropicAssistant("k", client=SimpleNamespace(
+        beta=SimpleNamespace(messages=garbage))).find_alternatives(
+        name="x", kind="product", country="IN", budget="1")  # fmt: skip
+    assert found == [] and dropped == 0
+
+
+async def test_alternatives_service_messages(monkeypatch: pytest.MonkeyPatch) -> None:
+    mock_user = _user(LlmMode.MOCK, None)
+    found, _, msg = await service.find_alternatives(
+        mock_user, name="x", kind="product", country="IN", budget="1"
+    )
+    assert found == [] and "Claude API key" in msg
+
+    claude_user = _user(LlmMode.ANTHROPIC, encrypt_secret("sk-ant-test"))
+
+    async def none(self: AnthropicAssistant, **_k: Any) -> Any:
+        return [], 2
+
+    monkeypatch.setattr(AnthropicAssistant, "find_alternatives", none)
+    _, dropped, msg = await service.find_alternatives(
+        claude_user, name="x", kind="product", country="IN", budget="1"
+    )
+    assert dropped == 2 and "could be verified" in msg
+
+    async def fail(self: AnthropicAssistant, **_k: Any) -> Any:
+        raise AssistantUnavailableError("Claude is rate limited right now.")
+
+    monkeypatch.setattr(AnthropicAssistant, "find_alternatives", fail)
+    _, _, msg = await service.find_alternatives(
+        claude_user, name="x", kind="product", country="IN", budget="1"
+    )
+    assert msg == "Claude is rate limited right now."
+
+
+async def test_mock_summary_points_out_a_missing_reserve() -> None:
+    text = await MockAssistant().summarize_plan(facts(reserve="₹0", reserve_zero=True))
+    assert "no emergency reserve set up" in text and "intact" not in text

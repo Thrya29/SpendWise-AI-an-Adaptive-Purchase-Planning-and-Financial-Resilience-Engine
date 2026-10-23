@@ -36,6 +36,7 @@ const HORIZONS = [3, 6, 12, 24].map((m) => ({ value: String(m), label: `${m} mon
 function DecisionRow({
   d,
   currency,
+  nameOf,
   selectable,
   selected,
   onToggle,
@@ -43,6 +44,7 @@ function DecisionRow({
 }: {
   d: Decision;
   currency: string;
+  nameOf: (id: string) => string | undefined;
   selectable: boolean;
   selected: boolean;
   onToggle: () => void;
@@ -70,7 +72,8 @@ function DecisionRow({
           <Badge tone={d.tier}>{labelOf(TIERS, d.tier).replace(/s$/, "")}</Badge>
           {d.late && <Badge tone="warning">Late</Badge>}
         </div>
-        <p className="mt-0.5 text-sm text-muted">{explain(d, currency)}</p>
+        <p className="mt-0.5 text-sm text-muted">{explain(d, currency, undefined, nameOf)}</p>
+        {d.group_note && <p className="mt-1 text-sm text-warning">{d.group_note}</p>}
         {changes.length > 0 && (
           <p className="mt-1 text-xs text-muted">
             <span className="font-medium text-text">If applied:</span> {changes.join(" · ")}
@@ -175,6 +178,7 @@ export default function PlannerPage() {
     });
   }
 
+  const nameOf = (id: string) => plan?.decisions.find((x) => x.item_id === id)?.name;
   const selectable = plan?.status === "draft" && !plan.stale;
   const reserveSelected = plan?.decisions.some(
     (d) => d.action === "use_reserve" && selected.has(d.item_id),
@@ -375,6 +379,7 @@ export default function PlannerPage() {
                             key={d.item_id}
                             d={d}
                             currency={cur}
+                            nameOf={nameOf}
                             selectable={
                               selectable && (hasChanges(d) || Boolean(d.alternative_changes))
                             }

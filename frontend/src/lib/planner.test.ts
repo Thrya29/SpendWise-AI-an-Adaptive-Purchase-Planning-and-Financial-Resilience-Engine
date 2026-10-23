@@ -33,6 +33,11 @@ function decision(overrides: Partial<Decision>): Decision {
     requires_reserve_approval: false,
     changes: { target_date: null, status: null },
     alternative_changes: null,
+    chosen_alternative_id: null,
+    forecast_probability: null,
+    forecast_by: null,
+    forecast_confidence: null,
+    forecast_note: null,
     ...overrides,
   };
 }
@@ -72,6 +77,28 @@ describe("explain", () => {
     expect(explain(decision({ action: "wait_price" }), "INR", L)).toBe(
       "Waiting for a lower price.",
     );
+    const waiting = decision({
+      action: "wait_price",
+      max_price_minor: 2_000_000,
+      forecast_probability: 0.6234,
+      forecast_by: "2026-12-15",
+      forecast_confidence: "medium",
+    });
+    expect(explain(waiting, "INR", L)).toMatch(
+      /62% chance it reaches your limit by 15 Dec 2026 \(medium confidence\)\.$/,
+    );
+    const noHistory = decision({
+      action: "wait_price",
+      forecast_note: "Not enough price history yet.",
+    });
+    expect(explain(noHistory, "INR", L)).toBe(
+      "Waiting for a lower price. Not enough price history yet.",
+    );
+    const alt = decision({ action: "alternative", chosen_alternative_id: "i9" });
+    expect(explain(alt, "INR", L, (id) => (id === "i9" ? "Pixel 11" : undefined))).toBe(
+      "You will buy Pixel 11 instead.",
+    );
+    expect(explain(alt, "INR", L)).toBe("Another item in this group is bought instead.");
   });
 });
 

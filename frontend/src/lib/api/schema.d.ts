@@ -303,6 +303,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/items/{item_id}/alternatives": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Link Alternative
+         * @description Mark two items as alternatives; the planner will buy at most one of the group.
+         */
+        post: operations["link_alternative_api_v1_items__item_id__alternatives_post"];
+        /** Unlink Alternative */
+        delete: operations["unlink_alternative_api_v1_items__item_id__alternatives_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{item_id}/alternatives/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Search Alternatives
+         * @description Current alternatives via Claude web search (your key); every link is verified.
+         */
+        post: operations["search_alternatives_api_v1_items__item_id__alternatives_search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{item_id}/forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Item Forecast
+         * @description Chance of the price reaching a target within a horizon, from this item's history.
+         */
+        get: operations["item_forecast_api_v1_items__item_id__forecast_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/items/{item_id}/price-check": {
         parameters: {
             query?: never;
@@ -746,7 +807,7 @@ export interface components {
          * Action
          * @enum {string}
          */
-        Action: "buy_now" | "schedule" | "postpone" | "wait_price" | "use_reserve";
+        Action: "buy_now" | "schedule" | "postpone" | "wait_price" | "use_reserve" | "alternative";
         /** AlertCount */
         AlertCount: {
             /** Unread */
@@ -778,6 +839,33 @@ export interface components {
             read_at: string | null;
             /** Title */
             title: string;
+        };
+        /** AlternativeSuggestion */
+        AlternativeSuggestion: {
+            /** Name */
+            name: string;
+            /** Price Text */
+            price_text?: string | null;
+            /** Source Name */
+            source_name: string;
+            /** Url */
+            url: string;
+            /** Why */
+            why: string;
+        };
+        /** AlternativesOut */
+        AlternativesOut: {
+            /** Available */
+            available: boolean;
+            /**
+             * Dropped Unverified
+             * @default 0
+             */
+            dropped_unverified: number;
+            /** Message */
+            message: string;
+            /** Suggestions */
+            suggestions?: components["schemas"]["AlternativeSuggestion"][];
         };
         /** ApplyObservationIn */
         ApplyObservationIn: {
@@ -864,11 +952,23 @@ export interface components {
             /** Alternative Pay On */
             alternative_pay_on: string | null;
             changes: components["schemas"]["ItemChanges"];
+            /** Chosen Alternative Id */
+            chosen_alternative_id?: string | null;
             /** Cost Minor */
             cost_minor: number;
             /** Current Target Date */
             current_target_date: string | null;
             deadline_type: components["schemas"]["DeadlineType"];
+            /** Forecast By */
+            forecast_by?: string | null;
+            /** Forecast Confidence */
+            forecast_confidence?: string | null;
+            /** Forecast Note */
+            forecast_note?: string | null;
+            /** Forecast Probability */
+            forecast_probability?: number | null;
+            /** Group Note */
+            group_note?: string | null;
             /**
              * Item Id
              * Format: uuid
@@ -933,6 +1033,46 @@ export interface components {
          * @enum {string}
          */
         EventKind: "income" | "obligation" | "planned" | "emergency";
+        /** ForecastOut */
+        ForecastOut: {
+            /** Available */
+            available: boolean;
+            /** Basis */
+            basis?: string | null;
+            /**
+             * By Date
+             * Format: date
+             */
+            by_date: string;
+            /** Confidence */
+            confidence?: ("high" | "medium" | "low") | null;
+            /** Currency */
+            currency: string;
+            /** Current Minor */
+            current_minor?: number | null;
+            /** Episodes */
+            episodes?: number | null;
+            /** Horizon Days */
+            horizon_days: number;
+            /** Observations */
+            observations: number;
+            /** Probability */
+            probability?: number | null;
+            /** Reason */
+            reason: string | null;
+            /** Recent High Minor */
+            recent_high_minor?: number | null;
+            /** Recent Low Minor */
+            recent_low_minor?: number | null;
+            /** Recent Median Minor */
+            recent_median_minor?: number | null;
+            /** Reference Minor */
+            reference_minor?: number | null;
+            /** Span Days */
+            span_days: number;
+            /** Target Minor */
+            target_minor: number;
+        };
         /**
          * Frequency
          * @enum {string}
@@ -1091,6 +1231,14 @@ export interface components {
          * @enum {string}
          */
         ItemStatus: "planned" | "purchased" | "postponed" | "dropped";
+        /** LinkAlternativeIn */
+        LinkAlternativeIn: {
+            /**
+             * Other Item Id
+             * Format: uuid
+             */
+            other_item_id: string;
+        };
         /**
          * LlmMode
          * @enum {string}
@@ -1507,6 +1655,8 @@ export interface components {
         };
         /** PlannedItemRead */
         PlannedItemRead: {
+            /** Alternative Group */
+            alternative_group: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1730,7 +1880,7 @@ export interface components {
          * Reason
          * @enum {string}
          */
-        Reason: "safe" | "on_target" | "late" | "above_max_price" | "not_affordable" | "outranked" | "needs_reserve";
+        Reason: "safe" | "on_target" | "late" | "above_max_price" | "not_affordable" | "outranked" | "needs_reserve" | "alternative_chosen";
         /** RegisterRequest */
         RegisterRequest: {
             /** Address */
@@ -2681,6 +2831,135 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlannedItemRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_alternative_api_v1_items__item_id__alternatives_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkAlternativeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlannedItemRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unlink_alternative_api_v1_items__item_id__alternatives_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_alternatives_api_v1_items__item_id__alternatives_search_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlternativesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    item_forecast_api_v1_items__item_id__forecast_get: {
+        parameters: {
+            query?: {
+                target_minor?: number | null;
+                horizon_days?: number | null;
+            };
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForecastOut"];
                 };
             };
             /** @description Validation Error */

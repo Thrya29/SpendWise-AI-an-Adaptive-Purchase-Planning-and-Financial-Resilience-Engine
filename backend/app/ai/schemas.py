@@ -58,6 +58,7 @@ class PlanFacts:
     total_planned: str  # formatted
     reserve: str  # formatted
     lowest_balance: list[tuple[str, str]]  # (scenario, formatted)
+    reserve_zero: bool = False  # no emergency reserve configured
     # Scenarios whose balance breaks the reserve even if nothing is bought.
     unsafe_anyway: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)

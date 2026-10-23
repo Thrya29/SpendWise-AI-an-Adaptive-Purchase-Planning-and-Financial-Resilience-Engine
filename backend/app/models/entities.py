@@ -219,6 +219,8 @@ class PlannedItem(IdMixin, TimestampMixin, Owned, Versioned, Base):
     failed_checks: Mapped[int] = mapped_column(
         SmallInteger, nullable=False, default=0, server_default="0"
     )
+    # Items sharing a group are alternatives: the planner buys at most one of them.
+    alternative_group: Mapped[UUID | None] = mapped_column(Uuid, index=True)
 
     __table_args__ = (
         CheckConstraint("priority BETWEEN 1 AND 5", name="priority_range"),

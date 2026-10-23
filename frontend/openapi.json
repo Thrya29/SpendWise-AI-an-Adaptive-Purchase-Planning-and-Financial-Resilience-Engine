@@ -195,7 +195,8 @@
           "schedule",
           "postpone",
           "wait_price",
-          "use_reserve"
+          "use_reserve",
+          "alternative"
         ],
         "title": "Action",
         "type": "string"
@@ -283,6 +284,77 @@
           "read_at"
         ],
         "title": "AlertOut",
+        "type": "object"
+      },
+      "AlternativeSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "price_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Text"
+          },
+          "source_name": {
+            "title": "Source Name",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "why": {
+            "title": "Why",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "url",
+          "source_name",
+          "why"
+        ],
+        "title": "AlternativeSuggestion",
+        "type": "object"
+      },
+      "AlternativesOut": {
+        "additionalProperties": false,
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "dropped_unverified": {
+            "default": 0,
+            "title": "Dropped Unverified",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/AlternativeSuggestion"
+            },
+            "title": "Suggestions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "available",
+          "message"
+        ],
+        "title": "AlternativesOut",
         "type": "object"
       },
       "ApplyObservationIn": {
@@ -537,6 +609,18 @@
           "changes": {
             "$ref": "#/components/schemas/ItemChanges"
           },
+          "chosen_alternative_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chosen Alternative Id"
+          },
           "cost_minor": {
             "title": "Cost Minor",
             "type": "integer"
@@ -555,6 +639,62 @@
           },
           "deadline_type": {
             "$ref": "#/components/schemas/DeadlineType"
+          },
+          "forecast_by": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forecast By"
+          },
+          "forecast_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forecast Confidence"
+          },
+          "forecast_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forecast Note"
+          },
+          "forecast_probability": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forecast Probability"
+          },
+          "group_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group Note"
           },
           "item_id": {
             "format": "uuid",
@@ -765,6 +905,167 @@
         ],
         "title": "EventKind",
         "type": "string"
+      },
+      "ForecastOut": {
+        "additionalProperties": false,
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "basis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basis"
+          },
+          "by_date": {
+            "format": "date",
+            "title": "By Date",
+            "type": "string"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "current_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Minor"
+          },
+          "episodes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Episodes"
+          },
+          "horizon_days": {
+            "title": "Horizon Days",
+            "type": "integer"
+          },
+          "observations": {
+            "title": "Observations",
+            "type": "integer"
+          },
+          "probability": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Probability"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "recent_high_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent High Minor"
+          },
+          "recent_low_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent Low Minor"
+          },
+          "recent_median_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent Median Minor"
+          },
+          "reference_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Minor"
+          },
+          "span_days": {
+            "title": "Span Days",
+            "type": "integer"
+          },
+          "target_minor": {
+            "title": "Target Minor",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "available",
+          "reason",
+          "currency",
+          "target_minor",
+          "horizon_days",
+          "by_date",
+          "observations",
+          "span_days"
+        ],
+        "title": "ForecastOut",
+        "type": "object"
       },
       "Frequency": {
         "enum": [
@@ -1256,6 +1557,21 @@
         ],
         "title": "ItemStatus",
         "type": "string"
+      },
+      "LinkAlternativeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "other_item_id": {
+            "format": "uuid",
+            "title": "Other Item Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "other_item_id"
+        ],
+        "title": "LinkAlternativeIn",
+        "type": "object"
       },
       "LlmMode": {
         "enum": [
@@ -2323,6 +2639,18 @@
       "PlannedItemRead": {
         "additionalProperties": false,
         "properties": {
+          "alternative_group": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alternative Group"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -2510,6 +2838,7 @@
           "notes",
           "purchased_on",
           "track_price",
+          "alternative_group",
           "last_checked_at",
           "last_check_error",
           "version",
@@ -3189,7 +3518,8 @@
           "above_max_price",
           "not_affordable",
           "outranked",
-          "needs_reserve"
+          "needs_reserve",
+          "alternative_chosen"
         ],
         "title": "Reason",
         "type": "string"
@@ -4961,6 +5291,242 @@
         "summary": "Create Row",
         "tags": [
           "planned items"
+        ]
+      }
+    },
+    "/api/v1/items/{item_id}/alternatives": {
+      "delete": {
+        "operationId": "unlink_alternative_api_v1_items__item_id__alternatives_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unlink Alternative",
+        "tags": [
+          "market"
+        ]
+      },
+      "post": {
+        "description": "Mark two items as alternatives; the planner will buy at most one of the group.",
+        "operationId": "link_alternative_api_v1_items__item_id__alternatives_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkAlternativeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlannedItemRead"
+                  },
+                  "title": "Response Link Alternative Api V1 Items  Item Id  Alternatives Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Link Alternative",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/items/{item_id}/alternatives/search": {
+      "post": {
+        "description": "Current alternatives via Claude web search (your key); every link is verified.",
+        "operationId": "search_alternatives_api_v1_items__item_id__alternatives_search_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlternativesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Search Alternatives",
+        "tags": [
+          "market"
+        ]
+      }
+    },
+    "/api/v1/items/{item_id}/forecast": {
+      "get": {
+        "description": "Chance of the price reaching a target within a horizon, from this item's history.",
+        "operationId": "item_forecast_api_v1_items__item_id__forecast_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "target_minor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "maximum": 1000000000000000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Target Minor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "horizon_days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 365,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Horizon Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Item Forecast",
+        "tags": [
+          "market"
         ]
       }
     },

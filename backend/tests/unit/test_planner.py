@@ -221,3 +221,26 @@ def test_input_validation() -> None:
     with pytest.raises(ValueError, match="Scenario names"):
         run([item("a", 1)], scenarios=(BASE, BASE))
     assert run([]).decisions == []
+
+
+def test_alternatives_group_buys_at_most_one_and_prefers_the_better_fit() -> None:
+    # 20k headroom this month: either laptop fits alone, never both.
+    pro = item("laptop-pro", 18_000, tier="need", priority=5, group="laptop")
+    air = item("laptop-air", 12_000, tier="need", priority=4, group="laptop")
+    solo = item("mouse", 1_000)
+    r = run([pro, air, solo], months=1, today=date(2026, 10, 1))
+    d = by_ref(r)
+    bought = [k for k in ("laptop-pro", "laptop-air") if d[k].action is Action.BUY_NOW]
+    assert bought == ["laptop-pro"]  # higher priority wins within the group
+    assert d["laptop-air"].action is Action.ALTERNATIVE
+    assert d["laptop-air"].chosen_alternative == "laptop-pro"
+    assert d["mouse"].action is Action.BUY_NOW
+
+
+def test_group_with_one_affordable_member_and_ungrouped_items_unaffected() -> None:
+    big = item("tv-oled", 90_000, tier="want", priority=5, group="tv")
+    small = item("tv-led", 15_000, tier="want", priority=3, group="tv")
+    d = by_ref(run([big, small], months=1, today=date(2026, 10, 1)))
+    assert d["tv-led"].action is Action.BUY_NOW and d["tv-oled"].action is Action.ALTERNATIVE
+    lonely = item("solo", 1_000, group="only-member")
+    assert by_ref(run([lonely]))["solo"].action is Action.BUY_NOW

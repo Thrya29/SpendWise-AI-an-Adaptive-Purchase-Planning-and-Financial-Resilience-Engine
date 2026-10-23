@@ -13,6 +13,7 @@ import {
 } from "recharts";
 
 import { MoneyInput } from "@/components/money-input";
+import { PriceOutlook } from "@/components/price-outlook";
 import { Alert, Badge, Button, EmptyState, Field, Input, LoadingBlock } from "@/components/ui";
 import { api, ApiError, type Schemas } from "@/lib/api/client";
 import { timeAgo } from "@/lib/market";
@@ -115,6 +116,7 @@ export function PriceHistory({ item, onChanged }: { item: Item; onChanged: () =>
   return (
     <div className="flex flex-col gap-5">
       {message && <Alert tone={message.tone}>{message.text}</Alert>}
+      <PriceOutlook item={item} />
 
       {history.loading && !history.data ? (
         <LoadingBlock />

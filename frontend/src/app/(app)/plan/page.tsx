@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import { ItemForm } from "@/components/item-form";
+import { Alternatives } from "@/components/alternatives";
+import { ItemForm, type ItemPrefill } from "@/components/item-form";
 import { PriceHistory } from "@/components/price-history";
 import { DraftBanner, QuickAdd } from "@/components/quick-add";
 import {
@@ -62,6 +63,8 @@ export default function PlanPage() {
   const closeEditor = () => {
     setEditing(null);
     setDraft(null);
+    setPrefill(null);
+    setLinkAfterSave(null);
   };
   const [deleting, setDeleting] = useState<Item | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -69,6 +72,41 @@ export default function PlanPage() {
   const [checkingId, setCheckingId] = useState<string | null>(null);
   const [checkResult, setCheckResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [historyFor, setHistoryFor] = useState<Item | null>(null);
+  const [altFor, setAltFor] = useState<Item | null>(null);
+  const [prefill, setPrefill] = useState<ItemPrefill | null>(null);
+  const [linkAfterSave, setLinkAfterSave] = useState<string | null>(null);
+
+  function addSuggestion(original: Item, s: Schemas["AlternativeSuggestion"]) {
+    setAltFor(null);
+    setPrefill({
+      name: s.name.slice(0, 200),
+      url: s.url,
+      tier: original.tier,
+      kind: original.kind,
+      priority: original.priority,
+      currency: original.currency,
+      target_date: original.target_date,
+      deadline_type: original.deadline_type,
+      lead_time_days: original.lead_time_days,
+    });
+    setLinkAfterSave(original.id);
+    setEditing("new");
+  }
+
+  async function onItemSaved(saved: Item) {
+    if (linkAfterSave) {
+      try {
+        await api(`/items/${linkAfterSave}/alternatives`, {
+          method: "POST",
+          body: { other_item_id: saved.id },
+        });
+      } catch (err) {
+        setActionError(err instanceof ApiError ? err.message : "Saved, but could not link it.");
+      }
+    }
+    closeEditor();
+    void items.reload();
+  }
 
   async function checkPrice(item: Item) {
     setCheckingId(item.id);
@@ -283,6 +321,7 @@ export default function PlanPage() {
                     </a>
                   )}
                   {item.track_price && " · tracking price"}
+                  {item.alternative_group && " · has alternatives"}
                 </p>
               )}
               {item.last_check_error && (
@@ -305,6 +344,9 @@ export default function PlanPage() {
                 )}
                 <Button size="sm" variant="ghost" onClick={() => setHistoryFor(item)}>
                   Prices
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setAltFor(item)}>
+                  Alternatives
                 </Button>
                 {item.status === "planned" && (
                   <>
@@ -361,13 +403,11 @@ export default function PlanPage() {
           <ItemForm
             item={editing === "new" ? undefined : editing}
             draft={editing === "new" ? (draft ?? undefined) : undefined}
+            prefill={editing === "new" ? (prefill ?? undefined) : undefined}
             defaultTier={tier === "all" ? undefined : tier}
             baseCurrency={user.base_currency}
             onCancel={closeEditor}
-            onSaved={() => {
-              closeEditor();
-              void items.reload();
-            }}
+            onSaved={(saved) => void onItemSaved(saved)}
           />
         )}
       </Dialog>
@@ -379,6 +419,21 @@ export default function PlanPage() {
         wide
       >
         {historyFor && <PriceHistory item={historyFor} onChanged={() => void items.reload()} />}
+      </Dialog>
+
+      <Dialog
+        open={altFor !== null}
+        onClose={() => setAltFor(null)}
+        title={altFor ? `Alternatives: ${altFor.name}` : ""}
+        wide
+      >
+        {altFor && (
+          <Alternatives
+            item={altFor}
+            onChanged={() => void items.reload()}
+            onAddSuggestion={(s) => addSuggestion(altFor, s)}
+          />
+        )}
       </Dialog>
 
       <ConfirmDialog

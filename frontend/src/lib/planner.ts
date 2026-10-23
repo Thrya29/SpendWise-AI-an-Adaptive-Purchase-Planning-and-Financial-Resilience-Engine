@@ -11,11 +11,17 @@ export const ACTION_GROUPS: { action: Action; title: string; hint: string }[] = 
   { action: "buy_now", title: "Buy now", hint: "Safe today in every protected scenario" },
   { action: "schedule", title: "Scheduled", hint: "Buy on the date shown to stay safe" },
   { action: "postpone", title: "Postponed", hint: "Not safe within this horizon — re-planned automatically" },
+  { action: "alternative", title: "Covered by an alternative", hint: "You marked these as alternatives; the plan buys the best fit of each group" },
   { action: "wait_price", title: "Waiting for a better price", hint: "Current price is above your limit" },
 ]; // prettier-ignore
 
 /** One plain-language sentence explaining a decision. All numbers come from the engine. */
-export function explain(d: Decision, currency: string, locale?: string): string {
+export function explain(
+  d: Decision,
+  currency: string,
+  locale?: string,
+  nameOf: (id: string) => string | undefined = () => undefined,
+): string {
   const date = (iso: string) => formatDate(iso, locale);
   const money = (minor: number) => formatMoney(minor, currency, { locale });
   const pay = d.pay_on ? date(d.pay_on) : "";
@@ -41,10 +47,24 @@ export function explain(d: Decision, currency: string, locale?: string): string 
         ? `Higher-priority items use the available money first. Needs ${gap} more headroom${when}${scenario}.`
         : `Needs ${gap} more than you can safely spend${when}${scenario}.`;
     }
-    case "wait_price":
-      return d.max_price_minor != null
-        ? `Price ${money(d.unit_price_minor)} is above your limit of ${money(d.max_price_minor)}.`
-        : "Waiting for a lower price.";
+    case "alternative": {
+      const other = d.chosen_alternative_id ? nameOf(d.chosen_alternative_id) : undefined;
+      return other
+        ? `You will buy ${other} instead.`
+        : "Another item in this group is bought instead.";
+    }
+    case "wait_price": {
+      const base =
+        d.max_price_minor != null
+          ? `Price ${money(d.unit_price_minor)} is above your limit of ${money(d.max_price_minor)}.`
+          : "Waiting for a lower price.";
+      if (d.forecast_probability != null && d.forecast_by) {
+        const pct = Math.round(d.forecast_probability * 100);
+        const confidence = d.forecast_confidence ?? "low";
+        return `${base} ${pct}% chance it reaches your limit by ${date(d.forecast_by)} (${confidence} confidence).`;
+      }
+      return d.forecast_note ? `${base} ${d.forecast_note}` : base;
+    }
   }
 }
 

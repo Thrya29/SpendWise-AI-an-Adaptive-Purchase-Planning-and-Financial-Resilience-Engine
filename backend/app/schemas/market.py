@@ -85,3 +85,42 @@ class AlertOut(ApiModel):
 
 class AlertCount(ApiModel):
     unread: int
+
+
+class ForecastOut(ApiModel):
+    available: bool
+    reason: str | None
+    currency: str
+    target_minor: int
+    horizon_days: int
+    by_date: date
+    observations: int
+    span_days: int
+    probability: float | None = None
+    confidence: Literal["high", "medium", "low"] | None = None
+    current_minor: int | None = None
+    reference_minor: int | None = None
+    episodes: int | None = None
+    recent_low_minor: int | None = None
+    recent_median_minor: int | None = None
+    recent_high_minor: int | None = None
+    basis: str | None = None
+
+
+class LinkAlternativeIn(ApiModel):
+    other_item_id: UUID
+
+
+class AlternativeSuggestion(ApiModel):
+    name: str
+    url: str
+    source_name: str
+    why: str
+    price_text: str | None = None
+
+
+class AlternativesOut(ApiModel):
+    available: bool
+    message: str
+    suggestions: list[AlternativeSuggestion] = Field(default_factory=list)
+    dropped_unverified: int = 0

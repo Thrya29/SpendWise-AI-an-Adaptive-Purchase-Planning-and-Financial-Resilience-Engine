@@ -63,6 +63,7 @@ class Action(StrEnum):
     POSTPONE = "postpone"
     WAIT_PRICE = "wait_price"
     USE_RESERVE = "use_reserve"
+    ALTERNATIVE = "alternative"  # another item in the same alternatives group was chosen
 
 
 class Reason(StrEnum):
@@ -73,6 +74,7 @@ class Reason(StrEnum):
     NOT_AFFORDABLE = "not_affordable"
     OUTRANKED = "outranked"
     NEEDS_RESERVE = "needs_reserve"
+    ALTERNATIVE_CHOSEN = "alternative_chosen"
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,6 +89,7 @@ class PlanItem:
     target_date: date | None = None
     lead_time_days: int = 0
     max_price: int | None = None
+    group: str | None = None  # alternatives: at most one item per group is bought
 
     @property
     def cost(self) -> int:
@@ -132,6 +135,8 @@ class Decision:
     shortfall_on: date | None = None
     # For USE_RESERVE: the later date on which it would fit without touching the reserve.
     alternative_pay_on: date | None = None
+    # For ALTERNATIVE: the item from the same group that was chosen instead.
+    chosen_alternative: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -416,6 +421,23 @@ class _Planner:
             if min(lg.lows) < self.reserve_required
         ]
 
+    def _groups(self) -> dict[str, list[PlanItem]]:
+        groups: dict[str, list[PlanItem]] = {}
+        for it in self.candidates:
+            if it.group is not None:
+                groups.setdefault(it.group, []).append(it)
+        return {g: members for g, members in groups.items() if len(members) > 1}
+
+    def _group_winner(self, it: PlanItem) -> str | None:
+        """Another member of ``it``'s group that is already being bought, if any."""
+        if it.group is None:
+            return None
+        return next(
+            (o.ref for o in self.candidates
+             if o.group == it.group and o.ref != it.ref and o.ref in self.chosen),
+            None,
+        )  # fmt: skip
+
     def spent_by(self, day_index: int) -> int:
         return sum(
             it.cost
@@ -433,6 +455,8 @@ class _Planner:
             for p in self.periods:
                 x[it.ref, p.index] = model.new_bool_var(f"x_{it.ref}_{p.index}")
             model.add_at_most_one(x[it.ref, p.index] for p in self.periods)
+        for members in self._groups().values():
+            model.add_at_most_one(x[it.ref, p.index] for it in members for p in self.periods)
 
         for lg in self.ledgers:
             for k in lg.records:
@@ -485,7 +509,10 @@ class _Planner:
             (
                 it
                 for it in self.candidates
-                if it.tier == "need" and it.deadline == "hard" and late_or_missing(it)
+                if it.tier == "need"
+                and it.deadline == "hard"
+                and late_or_missing(it)
+                and self._group_winner(it) is None
             ),
             key=lambda it: (-it.priority, it.cost, it.ref),
         )
@@ -513,9 +540,14 @@ class _Planner:
             for it in self.waiting
         }
         for it in self.candidates:
-            decisions[it.ref] = (
-                self._scheduled(it) if it.ref in self.chosen else self._postponed(it)
-            )
+            if it.ref in self.chosen:
+                decisions[it.ref] = self._scheduled(it)
+            elif (winner := self._group_winner(it)) is not None:
+                decisions[it.ref] = Decision(
+                    it.ref, Action.ALTERNATIVE, Reason.ALTERNATIVE_CHOSEN, chosen_alternative=winner
+                )
+            else:
+                decisions[it.ref] = self._postponed(it)
         return decisions
 
     def _scheduled(self, it: PlanItem) -> Decision:

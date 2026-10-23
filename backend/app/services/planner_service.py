@@ -43,6 +43,7 @@ from app.schemas.planner import (
     SkippedOut,
     SolverOut,
 )
+from app.services import forecast_service
 from app.services.ledger import load_planning_inputs
 from app.services.repository import OwnedRepository
 
@@ -90,12 +91,65 @@ def _changes(item: PlannedItem, d: Decision, pay_on: date | None = None) -> Item
     return ItemChanges.model_validate(changes)
 
 
+async def _wait_forecast(
+    session: AsyncSession, row: PlannedItem, d: Decision, today: date, horizon_months: int
+) -> dict[str, Any]:
+    """For "wait for a better price": the chance of reaching the limit before it is needed."""
+    if d.action is not Action.WAIT_PRICE or row.max_price_minor is None:
+        return {}
+    horizon = min(forecast_service.default_horizon(row, today), 31 * horizon_months)
+    f = await forecast_service.item_forecast(
+        session, row, today, target=row.max_price_minor, horizon_days=max(horizon, 1)
+    )
+    if not f.available:
+        return {"forecast_note": f.reason}
+    return {
+        "forecast_probability": f.probability,
+        "forecast_by": f.by_date,
+        "forecast_confidence": f.confidence,
+    }
+
+
+def _note_waiting_alternatives(
+    decisions: list[DecisionOut], items: dict[str, PlannedItem], today: date
+) -> None:
+    """Warn when buying a fallback would rule out a preferred alternative that is waiting.
+
+    The solver cannot buy an item above its price limit, so a lower-ranked alternative may be
+    scheduled instead. That trade-off is the user's call, so it is stated, not hidden.
+    """
+    by_id = {str(d.item_id): d for d in decisions}
+    for d in decisions:
+        if d.action not in _SCHEDULING:
+            continue
+        group = items[str(d.item_id)].alternative_group
+        if group is None:
+            continue
+        for other in decisions:
+            row = items[str(other.item_id)]
+            if (
+                other.action is Action.WAIT_PRICE
+                and row.alternative_group == group
+                and row.priority >= d.priority
+                and other.forecast_probability is not None
+                and other.forecast_by is not None
+            ):
+                pct = round(other.forecast_probability * 100)
+                by_id[str(d.item_id)].group_note = (
+                    f"Your preferred {other.name} is waiting for a better price ({pct}% chance "
+                    f"by {_human_date(other.forecast_by)}). Buying this now rules it out."
+                )
+                break
+
+
 def _facts(
     result: PlanResult,
     items: dict[str, PlannedItem],
+    *,
     unit_prices: dict[str, int],
     horizon: int,
     warnings: list[str],
+    forecasts: dict[str, float],
 ) -> PlanFacts:
     cur = result.currency
 
@@ -117,11 +171,20 @@ def _facts(
         postponed=[
             (items[d.ref].name, format_amount(d.shortfall or 0, cur)) for d in by(Action.POSTPONE)
         ],
-        waiting_for_price=names(by(Action.WAIT_PRICE)),
+        waiting_for_price=[
+            items[d.ref].name
+            + (
+                f" ({round(forecasts[d.ref] * 100)}% chance of reaching your limit in time)"
+                if d.ref in forecasts
+                else ""
+            )
+            for d in by(Action.WAIT_PRICE)
+        ],
         using_reserve=names(by(Action.USE_RESERVE)),
         late=names([d for d in result.decisions if d.late]),
         total_planned=format_amount(planned_total, cur),
         reserve=format_amount(result.reserve_required, cur),
+        reserve_zero=result.reserve_required == 0,
         lowest_balance=[(o.name, format_amount(o.min_balance, cur)) for o in result.outcomes],
         unsafe_anyway=[o.name for o in result.outcomes if o.reserve_breached_without_purchases],
         warnings=warnings,
@@ -162,6 +225,7 @@ async def create_plan(session: AsyncSession, user: User, req: PlanRequest, today
                 unit_price=converted.amount_minor, quantity=row.quantity,
                 deadline=row.deadline_type.value, target_date=row.target_date,
                 lead_time_days=row.lead_time_days, max_price=cap,
+                group=str(row.alternative_group) if row.alternative_group else None,
             )
         )  # fmt: skip
     if len(plan_items) > 300:
@@ -230,6 +294,10 @@ async def create_plan(session: AsyncSession, user: User, req: PlanRequest, today
                 alternative_pay_on=d.alternative_pay_on, max_price_minor=row.max_price_minor,
                 requires_reserve_approval=d.action is Action.USE_RESERVE,
                 changes=_changes(row, d),
+                chosen_alternative_id=items[d.chosen_alternative].id
+                if d.chosen_alternative
+                else None,
+                **(await _wait_forecast(session, row, d, today, req.horizon_months)),
                 alternative_changes=_changes(row, d, d.alternative_pay_on)
                 if d.alternative_pay_on
                 else None,
@@ -237,8 +305,21 @@ async def create_plan(session: AsyncSession, user: User, req: PlanRequest, today
         )  # fmt: skip
 
     summary = await ai.summarize_plan(
-        user, _facts(result, items, unit_prices, req.horizon_months, warnings)
+        user,
+        _facts(
+            result,
+            items,
+            unit_prices=unit_prices,
+            horizon=req.horizon_months,
+            warnings=warnings,
+            forecasts={
+                str(d.item_id): d.forecast_probability
+                for d in decisions
+                if d.forecast_probability is not None
+            },
+        ),
     )
+    _note_waiting_alternatives(decisions, items, today)
     planned_spend = sum(d.cost_minor for d in decisions if d.action in _SCHEDULING)
     plan = Plan(
         user_id=user.id,

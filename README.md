@@ -22,6 +22,8 @@ emergency reserve, and what happens if your **salary is delayed** or an **emerge
 | **Purchase planner** | Chooses the best month and day to buy each item, or postpones it, so your balance never drops below your reserve, **even if salary is late or lost** (you choose which shocks to guard against). It is an exact constraint solver (OR-Tools CP-SAT), not a heuristic. Every decision has a reason: postponed items show the exact extra money needed and by when. Nothing changes until you approve, and using the reserve always needs explicit consent. |
 | **Prices from links** | Paste a product link and SpendWise reads the price the page publishes for search engines (schema.org data), along with its source, time and stock status. Every check is kept as price history, and you can also record quotes from local shops. Your planning price changes only when you click *Use this price* or turn on *Track this price*. Every price shows where it came from and how old it is. |
 | **Price alerts** | For tracked items: a price at or below your maximum, a drop of 5% or more, back in stock, or checks that keep failing. A background worker re-checks twice a day, politely spacing out visits to each site. |
+| **Price outlook** | *"64% chance of ₹53,000 or less by 22 Nov (medium confidence)"*, based only on the item's own price history. It counts past sales and drops, and shows no forecast at all with less than 5 checks over 14 days. On held-out simulated data it is well calibrated: **+0.227 Brier skill, 3% calibration error** ([results](docs/results/forecast-calibration.md)). The planner uses it when you're waiting for a better price. |
+| **Alternatives** | Mark items as alternatives (laptop A *or* B) and the planner buys at most one, the best fit. If buying a fallback now would rule out a preferred item that's waiting for a sale, the plan says so. With your Claude key, **Find current alternatives** runs a live web search and keeps only products found on the cited pages. |
 | **Multi-currency** | Daily European Central Bank reference rates. Accounts, income and items in other currencies are **converted exactly, with the rate and date shown**. Currencies without a reference rate are left out with a warning, never guessed. |
 | **"Describe it" entry** | Type *"work laptop for 75k by 15 Dec, must have"* and the assistant fills in the form for you to review. |
 | **AI assistant mode** | Each user chooses the built-in assistant (offline, no API key) or **their own Claude API key**, which is stored encrypted and never shown again. AI only reads text and writes summaries. It never does the math: a summary containing any number the engine didn't produce is rejected. Any AI failure falls back to the built-in assistant. |
@@ -49,7 +51,7 @@ Browser ──► Next.js (UI + same-origin /api proxy) ──► FastAPI ──
 * **Typed contract.** The frontend's TypeScript types are generated from the API's OpenAPI schema,
   and CI fails if they drift.
 
-Full design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Planner: [ADR 0005](docs/adr/0005-robust-purchase-scheduling.md) · Market data: [ADR 0006](docs/adr/0006-market-data-provenance.md) · Decisions: [docs/adr/](docs/adr/) ·
+Full design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Planner: [ADR 0005](docs/adr/0005-robust-purchase-scheduling.md) · Market data: [ADR 0006](docs/adr/0006-market-data-provenance.md) · Forecasting: [ADR 0007](docs/adr/0007-price-drop-forecasting.md) · Decisions: [docs/adr/](docs/adr/) ·
 Security: [docs/SECURITY.md](docs/SECURITY.md)
 
 ## Run it
@@ -76,7 +78,7 @@ Every push runs in CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
 | ruff lint + format · mypy `--strict` | ESLint (0 warnings) · Prettier · `tsc` |
 | pytest on **SQLite and PostgreSQL 16** | Vitest unit tests |
 | Property-based tests (Hypothesis): money invariants, and *no plan ever breaks the reserve* | Production `next build` |
-| Coverage gate ≥ 85% (currently ~97%) | Generated API types must match the schema |
+| Coverage gate ≥ 85% (currently ~96%) · forecast calibration regression test | Generated API types must match the schema |
 | Migration ↔ model drift check + up/down round-trip | `npm audit` on production deps |
 | `pip-audit` on the locked runtime deps | Docker images must build |
 
@@ -101,8 +103,8 @@ Built in phases. Each phase ships tested and documented before the next begins.
 | 1 | Ledger, needs/wants/desires CRUD, cash-flow projection, salary-delay & emergency scenarios | ✅ Done |
 | 2 | Purchase **scheduling optimizer** (CP-SAT): buy now / schedule / postpone / wait for price / use reserve with consent; replanning; AI item entry and summaries (built-in or Claude) | ✅ Done |
 | 3 | Market data: link prices with provenance, price history and quotes, multi-currency (ECB), alerts, background worker; SSRF-hardened fetching | ✅ Done |
-| 4 | Price forecasting with calibrated uncertainty; alternative-product discovery | ⏳ Next |
-| 5 | Savings & investment education: runway, FD vs. liquid, mutual-fund NAVs, gold (all sourced and timestamped) | Planned |
+| 4 | Calibrated price-drop forecasting (measured on held-out data), alternatives groups in the planner, verified web search for current alternatives | ✅ Done |
+| 5 | Savings & investment education: runway, FD vs. liquid, mutual-fund NAVs, gold (all sourced and timestamped) | ⏳ Next |
 | 6 | Research benchmark: planner vs. baseline budgeting rules under simulated shocks | Planned |
 | 7 | Production hardening: observability, load tests, deployment guide | Planned |
 

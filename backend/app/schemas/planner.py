@@ -68,6 +68,15 @@ class DecisionOut(ApiModel):
     changes: ItemChanges
     # For reserve decisions: what applying does if the user does not approve using the reserve.
     alternative_changes: ItemChanges | None = None
+    # For "alternative": the item from the same group that the plan buys instead.
+    chosen_alternative_id: UUID | None = None
+    # For "wait for a better price": chance of reaching the limit before it is needed.
+    forecast_probability: float | None = None
+    forecast_by: date | None = None
+    forecast_confidence: str | None = None
+    forecast_note: str | None = None
+    # Trade-offs the user should see, e.g. a preferred alternative still waiting for a price.
+    group_note: str | None = None
 
 
 class ScenarioOut(ApiModel):

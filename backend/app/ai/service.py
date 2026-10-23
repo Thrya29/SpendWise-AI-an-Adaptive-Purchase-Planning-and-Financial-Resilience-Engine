@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass
 from typing import Protocol
 
-from app.ai.anthropic_provider import AnthropicAssistant, AssistantUnavailableError
+from app.ai.anthropic_provider import AnthropicAssistant, AssistantUnavailableError, RawAlternative
 from app.ai.mock import MockAssistant
 from app.ai.schemas import ParseContext, PlanFacts, RawItemDraft
 from app.core.security import decrypt_secret
@@ -57,3 +57,30 @@ async def summarize_plan(user: User, facts: PlanFacts) -> AssistantResult[str]:
         except AssistantUnavailableError as exc:
             notice = f"{exc.reason} Used the built-in summary instead."
     return AssistantResult(await MockAssistant().summarize_plan(facts), "mock", notice)
+
+
+async def find_alternatives(
+    user: User, *, name: str, kind: str, country: str, budget: str
+) -> tuple[list[RawAlternative], int, str]:
+    """(verified suggestions, dropped count, message). Requires the user's Claude key."""
+    primary, notice = _assistant_for(user)
+    if not isinstance(primary, AnthropicAssistant):
+        return (
+            [],
+            0,
+            notice
+            or (
+                "Finding alternatives needs a live web search, which uses your own Claude API key. "
+                "Add one in Settings, or add alternatives yourself."
+            ),
+        )
+    try:
+        found, dropped = await primary.find_alternatives(
+            name=name, kind=kind, country=country, budget=budget
+        )
+    except AssistantUnavailableError as exc:
+        return [], 0, exc.reason
+    if not found:
+        return [], dropped, "No current alternatives could be verified from the search results."
+    note = f" {dropped} unverified suggestion(s) were removed." if dropped else ""
+    return found, dropped, f"Found {len(found)} alternative(s) from current web pages.{note}"

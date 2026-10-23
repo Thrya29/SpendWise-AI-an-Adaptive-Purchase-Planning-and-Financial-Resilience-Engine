@@ -1,0 +1,7 @@
+# Research scripts share the backend's lint rules, with two deliberate exceptions.
+extend = "../backend/pyproject.toml"
+
+[lint.per-file-ignores]
+# S311: seeded pseudo-random numbers are exactly what a reproducible simulation needs.
+# RUF001: en dashes are intentional typography in generated Markdown reports.
+"*.py" = ["S311", "RUF001"]
