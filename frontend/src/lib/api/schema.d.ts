@@ -371,6 +371,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/imports/statement/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply Statement
+         * @description Create the confirmed income and bills, and optionally set the account balance.
+         */
+        post: operations["apply_statement_api_v1_imports_statement_apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imports/statement/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Statement
+         * @description Read a CSV/TXT bank statement and suggest recurring income and bills. Saves nothing.
+         */
+        post: operations["preview_statement_api_v1_imports_statement_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/incomes": {
         parameters: {
             query?: never;
@@ -1648,6 +1688,13 @@ export interface components {
             /** Planned Outflow Minor */
             planned_outflow_minor: number;
         };
+        /** NewAccountIn */
+        NewAccountIn: {
+            /** @default bank */
+            kind: components["schemas"]["AccountKind"];
+            /** Name */
+            name: string;
+        };
         /** ObligationCreate */
         ObligationCreate: {
             /** Amount Minor */
@@ -2259,6 +2306,51 @@ export interface components {
          * @enum {string}
          */
         Reason: "safe" | "on_target" | "late" | "above_max_price" | "not_affordable" | "outranked" | "needs_reserve" | "alternative_chosen";
+        /** RecurringOut */
+        RecurringOut: {
+            /**
+             * Already Set Up
+             * @default false
+             */
+            already_set_up: boolean;
+            /** Amount Minor */
+            amount_minor: number;
+            /** Amount Varies */
+            amount_varies: boolean;
+            /** Category */
+            category: string;
+            /**
+             * Confidence
+             * @enum {string}
+             */
+            confidence: "high" | "medium";
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "income" | "expense";
+            /** Essential */
+            essential: boolean;
+            /** Examples */
+            examples: string[];
+            frequency: components["schemas"]["Frequency"];
+            /** Key */
+            key: string;
+            /**
+             * Last On
+             * Format: date
+             */
+            last_on: string;
+            /** Name */
+            name: string;
+            /**
+             * Next On
+             * Format: date
+             */
+            next_on: string;
+            /** Occurrences */
+            occurrences: number;
+        };
         /** RegisterRequest */
         RegisterRequest: {
             /** Address */
@@ -2432,6 +2524,112 @@ export interface components {
             solve_ms: number;
             /** Status */
             status: string;
+        };
+        /** StatementApplyIn */
+        StatementApplyIn: {
+            /**
+             * Account Id
+             * @description Existing account to update
+             */
+            account_id?: string | null;
+            /**
+             * Closing Balance Minor
+             * @description Set the account so its balance today equals this amount
+             */
+            closing_balance_minor?: number | null;
+            /** Currency */
+            currency?: string | null;
+            /** Incomes */
+            incomes?: components["schemas"]["IncomeCreate"][];
+            new_account?: components["schemas"]["NewAccountIn"] | null;
+            /** Obligations */
+            obligations?: components["schemas"]["ObligationCreate"][];
+        };
+        /** StatementApplyOut */
+        StatementApplyOut: {
+            /** Account Id */
+            account_id: string | null;
+            /** Balance Minor */
+            balance_minor: number | null;
+            /** Incomes Created */
+            incomes_created: string[];
+            /** Obligations Created */
+            obligations_created: string[];
+            /** Skipped */
+            skipped: string[];
+        };
+        /** StatementIn */
+        StatementIn: {
+            /**
+             * Currency
+             * @description Default: your base currency
+             */
+            currency?: string | null;
+            /**
+             * Day First
+             * @description Dates like 05/10/2026 are 5 October
+             * @default true
+             */
+            day_first: boolean;
+            /** Text */
+            text: string;
+        };
+        /** StatementPreviewOut */
+        StatementPreviewOut: {
+            /** Balance Checked */
+            balance_checked: number;
+            /** Balance Mismatches */
+            balance_mismatches: number;
+            /** Closing Balance Minor */
+            closing_balance_minor: number | null;
+            /** Columns */
+            columns: {
+                [key: string]: string;
+            };
+            /** Currency */
+            currency: string;
+            /** Date Format */
+            date_format: string;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Money In Minor */
+            money_in_minor: number;
+            /** Money Out Minor */
+            money_out_minor: number;
+            /** Opening Balance Minor */
+            opening_balance_minor: number | null;
+            /** Recent */
+            recent: components["schemas"]["StatementRowOut"][];
+            /** Recurring */
+            recurring: components["schemas"]["RecurringOut"][];
+            /** Rows */
+            rows: number;
+            /** Skipped Rows */
+            skipped_rows: number;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /** Warnings */
+            warnings: string[];
+        };
+        /** StatementRowOut */
+        StatementRowOut: {
+            /** Amount Minor */
+            amount_minor: number;
+            /** Balance Minor */
+            balance_minor: number | null;
+            /** Description */
+            description: string;
+            /**
+             * On
+             * Format: date
+             */
+            on: string;
         };
         /** StatusChange */
         StatusChange: {
@@ -3308,6 +3506,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GoldOut"];
+                };
+            };
+        };
+    };
+    apply_statement_api_v1_imports_statement_apply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatementApplyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementApplyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_statement_api_v1_imports_statement_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatementIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementPreviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

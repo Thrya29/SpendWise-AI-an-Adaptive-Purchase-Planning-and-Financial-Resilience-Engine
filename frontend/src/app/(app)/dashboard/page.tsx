@@ -97,6 +97,15 @@ function Onboarding({
           </li>
         ))}
       </ol>
+      {(counts.incomes === 0 || counts.obligations === 0) && (
+        <p className="mt-3 text-sm text-muted">
+          Faster:{" "}
+          <Link href="/import" className="font-medium text-brand hover:underline">
+            import a bank statement
+          </Link>{" "}
+          and SpendWise finds your salary and regular bills for you.
+        </p>
+      )}
     </Card>
   );
 }

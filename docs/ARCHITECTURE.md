@@ -238,7 +238,27 @@ not held that day):
 A 24-household version runs in CI and asserts that every planner variant has fewer avoidable
 overdrafts than `buffer`, which has fewer than `impulse`.
 
-## 15. What comes next
+## 15. Statement import (`domain/statement.py`, `services/import_service.py`)
+
+[ADR 0010](adr/0010-statement-import.md). `POST /imports/statement/preview` takes the file's text
+and returns what was read; nothing is stored. The parser:
+
+* finds the header row by its contents (banks put a preamble above the table), tries the sniffed
+  delimiter and then `,` tab `;` `|`, and maps columns by name patterns (Narration / Particulars /
+  Transaction Remarks; Withdrawal / Debit / DR; Deposit / Credit / CR; a signed Amount with an
+  optional Dr/Cr column);
+* picks the date format that parses at least 80% of rows (day first unless told otherwise), skips
+  footer and summary lines, and sorts rows oldest first;
+* checks every row against the running balance, if there is one, and warns about mismatches.
+
+Recurring detection normalises each description into a payee key (UPI/NEFT fields, handles,
+references, month names and transfer jargon removed), groups by direction and key, and keeps
+groups whose gaps are regular (75% within the band): weekly (5–9 days, at least 3 times),
+monthly (25–36) or quarterly (80–100). Keyword hints name common bills and mark them essential.
+`POST /imports/statement/apply` creates only what the user confirmed, skips exact duplicates,
+and can set an account so that today's balance equals the statement's closing balance.
+
+## 16. What comes next
 
 Phase 7 hardens production: metrics and tracing, load tests of the planner and API, backup and
 restore, and a deployment guide.

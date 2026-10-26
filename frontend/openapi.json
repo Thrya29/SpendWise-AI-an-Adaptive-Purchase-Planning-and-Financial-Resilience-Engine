@@ -2360,6 +2360,26 @@
         "title": "MonthOut",
         "type": "object"
       },
+      "NewAccountIn": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/AccountKind",
+            "default": "bank"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "NewAccountIn",
+        "type": "object"
+      },
       "ObligationCreate": {
         "additionalProperties": false,
         "properties": {
@@ -4251,6 +4271,97 @@
         "title": "Reason",
         "type": "string"
       },
+      "RecurringOut": {
+        "additionalProperties": false,
+        "properties": {
+          "already_set_up": {
+            "default": false,
+            "title": "Already Set Up",
+            "type": "boolean"
+          },
+          "amount_minor": {
+            "title": "Amount Minor",
+            "type": "integer"
+          },
+          "amount_varies": {
+            "title": "Amount Varies",
+            "type": "boolean"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "confidence": {
+            "enum": [
+              "high",
+              "medium"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "income",
+              "expense"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "essential": {
+            "title": "Essential",
+            "type": "boolean"
+          },
+          "examples": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Examples",
+            "type": "array"
+          },
+          "frequency": {
+            "$ref": "#/components/schemas/Frequency"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "last_on": {
+            "format": "date",
+            "title": "Last On",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "next_on": {
+            "format": "date",
+            "title": "Next On",
+            "type": "string"
+          },
+          "occurrences": {
+            "title": "Occurrences",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "direction",
+          "name",
+          "amount_minor",
+          "frequency",
+          "last_on",
+          "next_on",
+          "occurrences",
+          "amount_varies",
+          "confidence",
+          "category",
+          "essential",
+          "examples"
+        ],
+        "title": "RecurringOut",
+        "type": "object"
+      },
       "RegisterRequest": {
         "additionalProperties": false,
         "properties": {
@@ -4720,6 +4831,325 @@
           "objective"
         ],
         "title": "SolverOut",
+        "type": "object"
+      },
+      "StatementApplyIn": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Existing account to update",
+            "title": "Account Id"
+          },
+          "closing_balance_minor": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000000.0,
+                "minimum": -1000000000000000.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set the account so its balance today equals this amount",
+            "title": "Closing Balance Minor"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "incomes": {
+            "items": {
+              "$ref": "#/components/schemas/IncomeCreate"
+            },
+            "maxItems": 20,
+            "title": "Incomes",
+            "type": "array"
+          },
+          "new_account": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NewAccountIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "obligations": {
+            "items": {
+              "$ref": "#/components/schemas/ObligationCreate"
+            },
+            "maxItems": 60,
+            "title": "Obligations",
+            "type": "array"
+          }
+        },
+        "title": "StatementApplyIn",
+        "type": "object"
+      },
+      "StatementApplyOut": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "balance_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance Minor"
+          },
+          "incomes_created": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Incomes Created",
+            "type": "array"
+          },
+          "obligations_created": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Obligations Created",
+            "type": "array"
+          },
+          "skipped": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Skipped",
+            "type": "array"
+          }
+        },
+        "required": [
+          "account_id",
+          "balance_minor",
+          "incomes_created",
+          "obligations_created",
+          "skipped"
+        ],
+        "title": "StatementApplyOut",
+        "type": "object"
+      },
+      "StatementIn": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Default: your base currency",
+            "title": "Currency"
+          },
+          "day_first": {
+            "default": true,
+            "description": "Dates like 05/10/2026 are 5 October",
+            "title": "Day First",
+            "type": "boolean"
+          },
+          "text": {
+            "maxLength": 3000000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "StatementIn",
+        "type": "object"
+      },
+      "StatementPreviewOut": {
+        "additionalProperties": false,
+        "properties": {
+          "balance_checked": {
+            "title": "Balance Checked",
+            "type": "integer"
+          },
+          "balance_mismatches": {
+            "title": "Balance Mismatches",
+            "type": "integer"
+          },
+          "closing_balance_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closing Balance Minor"
+          },
+          "columns": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "object"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "date_format": {
+            "title": "Date Format",
+            "type": "string"
+          },
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "money_in_minor": {
+            "title": "Money In Minor",
+            "type": "integer"
+          },
+          "money_out_minor": {
+            "title": "Money Out Minor",
+            "type": "integer"
+          },
+          "opening_balance_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opening Balance Minor"
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/StatementRowOut"
+            },
+            "title": "Recent",
+            "type": "array"
+          },
+          "recurring": {
+            "items": {
+              "$ref": "#/components/schemas/RecurringOut"
+            },
+            "title": "Recurring",
+            "type": "array"
+          },
+          "rows": {
+            "title": "Rows",
+            "type": "integer"
+          },
+          "skipped_rows": {
+            "title": "Skipped Rows",
+            "type": "integer"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "currency",
+          "rows",
+          "start",
+          "end",
+          "columns",
+          "date_format",
+          "skipped_rows",
+          "balance_checked",
+          "balance_mismatches",
+          "opening_balance_minor",
+          "closing_balance_minor",
+          "money_in_minor",
+          "money_out_minor",
+          "recurring",
+          "recent",
+          "warnings"
+        ],
+        "title": "StatementPreviewOut",
+        "type": "object"
+      },
+      "StatementRowOut": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_minor": {
+            "title": "Amount Minor",
+            "type": "integer"
+          },
+          "balance_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance Minor"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "on": {
+            "format": "date",
+            "title": "On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "on",
+          "description",
+          "amount_minor",
+          "balance_minor"
+        ],
+        "title": "StatementRowOut",
         "type": "object"
       },
       "StatusChange": {
@@ -6212,6 +6642,100 @@
         "summary": "Refresh Gold",
         "tags": [
           "insights"
+        ]
+      }
+    },
+    "/api/v1/imports/statement/apply": {
+      "post": {
+        "description": "Create the confirmed income and bills, and optionally set the account balance.",
+        "operationId": "apply_statement_api_v1_imports_statement_apply_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatementApplyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementApplyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Apply Statement",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
+    "/api/v1/imports/statement/preview": {
+      "post": {
+        "description": "Read a CSV/TXT bank statement and suggest recurring income and bills. Saves nothing.",
+        "operationId": "preview_statement_api_v1_imports_statement_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatementIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementPreviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Preview Statement",
+        "tags": [
+          "imports"
         ]
       }
     },

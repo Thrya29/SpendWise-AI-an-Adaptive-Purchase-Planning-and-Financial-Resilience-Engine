@@ -16,6 +16,7 @@ emergency reserve, and what happens if your **salary is delayed** or an **emerge
 | Area | Capability |
 |---|---|
 | **Needs, wants & desires** | Add, edit, delete and filter planned spending: products, services, travel, experiences, subscriptions. Each item has a priority (1–5), target date, hard/soft/flexible deadline, lead time, price ceiling, link and location. Items can be marked purchased, postponed, or moved back to planned. |
+| **Statement import** | Upload a CSV statement from net banking (HDFC-, SBI-, ICICI- and Axis-style layouts, or any file with date, description and amount columns). SpendWise checks every row against the running balance, then suggests your salary and regular bills (weekly, monthly, quarterly) with their typical amounts. You choose what to keep and which bills are essential. The statement itself is never stored. |
 | **Money** | Accounts with live balances, recurring income (weekly/monthly/quarterly/yearly/one-off), recurring expenses flagged as essential or discretionary, and one-off transactions. |
 | **Emergency reserve** | A configurable reserve (N months of essentials + a buffer) that plans must never spend. |
 | **What-if simulator** | Projects the balance day by day for 3–24 months. You can apply a **salary delay** (paid late as arrears) or **salary loss** for N months, plus an **unexpected expense**. You see when you'd dip into the reserve or run out, and which planned purchases stay safe. |
@@ -117,6 +118,8 @@ Built in phases. Each phase ships tested and documented before the next begins.
   affordable only if salary arrives, the plan keeps the safe date but shows the on-time option
   with the exact shortfall it risks, and you can tick *Pay on time anyway* for that item.
 * The benchmark households are simulated: results describe the methods, not a real population.
+* Statement import reads CSV/TXT exports only, not PDF. Live bank linking (India's Account
+  Aggregator framework) needs a licensed partner and is not built.
 
 * **Not every shop can be read.** Big marketplaces often block automated checks or build the price
   with JavaScript. SpendWise then says it found no price, and you enter one yourself or record a
