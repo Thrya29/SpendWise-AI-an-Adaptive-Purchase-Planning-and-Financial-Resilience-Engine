@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { CheckinCard } from "@/components/feedback";
 import { MoneyInput } from "@/components/money-input";
 import { ProjectionChart } from "@/components/projection-chart";
 import {
@@ -230,6 +231,7 @@ export default function DashboardPage() {
 
       <div className="flex flex-col gap-6">
         {counts.data && <Onboarding counts={counts.data} />}
+        <CheckinCard />
 
         {baseline.loading && !base ? (
           <LoadingBlock label="Projecting your cash flow…" />

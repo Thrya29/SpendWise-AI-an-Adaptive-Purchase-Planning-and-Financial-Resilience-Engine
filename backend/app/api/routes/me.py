@@ -12,6 +12,7 @@ from app.core.security import encrypt_secret, verify_password
 from app.models.entities import (
     Account,
     AuditEvent,
+    Feedback,
     IncomeStream,
     LlmMode,
     Obligation,
@@ -19,6 +20,7 @@ from app.models.entities import (
     Transaction,
     User,
 )
+from app.schemas.feedback import FeedbackRead
 from app.schemas.finance import (
     AccountRead,
     IncomeRead,
@@ -27,6 +29,7 @@ from app.schemas.finance import (
     TransactionRead,
 )
 from app.schemas.users import LlmSettingsUpdate, ProfileUpdate, UserRead
+from app.services import usage
 
 router = APIRouter(prefix="/me", tags=["profile"])
 
@@ -51,8 +54,11 @@ async def update_me(body: ProfileUpdate, user: UserDep, session: SessionDep) -> 
             "reserve_months",
             "reserve_buffer_minor",
             "email_notifications",
+            "share_usage",
         }:
             raise DomainValidationError(f"{key} cannot be null")
+        if key == "share_usage" and value is False and user.share_usage:
+            await usage.forget(session, user.id)  # turning it off erases what was shared
         setattr(user, key, value)
     await session.flush()
     return UserRead.model_validate(user)
@@ -100,6 +106,7 @@ async def export_my_data(user: UserDep, session: SessionDep) -> dict[str, Any]:
         "obligations": await dump(Obligation, ObligationRead),
         "planned_items": await dump(PlannedItem, PlannedItemRead),
         "transactions": await dump(Transaction, TransactionRead),
+        "feedback": await dump(Feedback, FeedbackRead),
     }
 
 
@@ -109,4 +116,5 @@ async def delete_my_account(body: DeleteAccountRequest, user: UserDep, session: 
     if not verify_password(body.password, user.password_hash):
         raise UnauthorizedError("Password is incorrect")
     await session.execute(delete(AuditEvent).where(AuditEvent.user_id == user.id))
+    await usage.forget(session, user.id)
     await session.execute(delete(User).where(User.id == user.id))

@@ -13,6 +13,7 @@ from app.core.db import get_session
 from app.core.errors import UnauthorizedError
 from app.core.security import decode_access_token
 from app.models.entities import User
+from app.services import usage
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -29,6 +30,7 @@ async def current_user(
     user = await session.get(User, user_id) if user_id else None
     if user is None:
         raise UnauthorizedError("Invalid or expired access token")
+    usage.mark_active(session, user, user_today(user))
     return user
 
 

@@ -274,7 +274,20 @@ opted in and SMTP is configured, unread alerts not yet emailed (from the last 3 
 go out as one digest, at most once per `SPENDWISE_DIGEST_HOURS`. A failed send is retried
 after an hour.
 
-## 17. What comes next
+## 17. Feedback and pilot measurement
+
+* `POST /feedback` stores a comment with an optional 1–5 rating and the page it came from.
+* `GET /feedback/checkin` is due once per month, for the previous month, if the account existed
+  for at least two weeks of it; `POST /feedback/checkin` stores three answers (ran short for a
+  bill, missed a need's deadline, followed the plan) and is unique per user and month.
+* `services/usage.py` records `active` (once per local day, from the auth dependency),
+  `statement_imported`, `plan_created`, `plan_applied`, `on_time_chosen`, `checkin` and
+  `feedback`, only for users with `share_usage`. The subject is an HMAC of the user id keyed with
+  the server's encryption key.
+* `python -m app.pilot_report` prints setup progress, weekly active users, 4th-or-5th-week
+  retention, check-in outcomes per month and the latest comments. See [PILOT.md](PILOT.md).
+
+## 18. What comes next
 
 Phase 7 hardens production: metrics and tracing, load tests of the planner and API, backup and
 restore, and a deployment guide.

@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import (
     auth,
+    feedback,
     finance,
     health,
     imports,
@@ -57,7 +58,8 @@ def create_app() -> FastAPI:
     )
     install_error_handlers(app)
     app.include_router(health.router)
-    for module in (auth, me, finance, projection, planner, market, insights, imports):
+    modules = (auth, me, finance, projection, planner, market, insights, imports, feedback)
+    for module in modules:
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(planner.assistant_router, prefix=API_PREFIX)
     return app

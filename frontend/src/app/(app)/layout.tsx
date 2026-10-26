@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { AlertsBell } from "@/components/alerts-bell";
+import { FeedbackButton } from "@/components/feedback";
 import { Button, cx, LoadingBlock } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 
@@ -58,6 +59,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
+          <div className="hidden sm:block">
+            <FeedbackButton />
+          </div>
           <AlertsBell />
           <div className="hidden items-center gap-3 sm:flex">
             <span className="max-w-40 truncate text-sm text-muted" title={user.email}>
@@ -73,9 +77,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <footer className="mx-auto max-w-6xl px-4 pb-10 text-xs text-muted">
         SpendWise provides planning tools and educational information, not regulated financial
         advice. Projections are estimates based on the data you enter.
-        <button type="button" onClick={() => void logout()} className="ml-3 underline sm:hidden">
-          Sign out
-        </button>
+        <span className="mt-2 flex items-center gap-2 sm:hidden">
+          <FeedbackButton />
+          <button type="button" onClick={() => void logout()} className="underline">
+            Sign out
+          </button>
+        </span>
       </footer>
     </div>
   );

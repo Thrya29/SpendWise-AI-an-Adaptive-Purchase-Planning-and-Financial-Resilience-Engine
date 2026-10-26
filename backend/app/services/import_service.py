@@ -21,6 +21,7 @@ from app.schemas.imports import (
     StatementPreviewOut,
     StatementRowOut,
 )
+from app.services import usage
 from app.services.ledger import account_balances
 from app.services.repository import OwnedRepository
 
@@ -170,6 +171,7 @@ async def apply(
             obj = await repo.create(**values)
             created.append(obj.id)
             existing.add((p.name.lower(), p.amount_minor, p.frequency))
+    usage.record(session, user, "statement_imported", today, len(incomes) + len(obligations))
     return StatementApplyOut(
         account_id=account.id if account else None,
         balance_minor=balance,

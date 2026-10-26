@@ -49,6 +49,7 @@ class UserRead(ApiModel):
     llm_mode: LlmMode
     llm_api_key_hint: str | None
     email_notifications: bool = False
+    share_usage: bool = False
     created_at: datetime
 
     @computed_field  # type: ignore[prop-decorator]
@@ -68,6 +69,7 @@ class ProfileUpdate(ApiModel):
     reserve_months: Annotated[int, Field(ge=0, le=24)] | None = None
     reserve_buffer_minor: NonNegativeMinor | None = None
     email_notifications: bool | None = None
+    share_usage: bool | None = None
 
 
 class LlmSettingsUpdate(ApiModel):

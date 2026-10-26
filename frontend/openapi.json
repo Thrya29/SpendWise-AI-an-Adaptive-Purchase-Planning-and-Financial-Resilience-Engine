@@ -547,6 +547,116 @@
         "title": "CheckOut",
         "type": "object"
       },
+      "CheckinDue": {
+        "additionalProperties": false,
+        "properties": {
+          "due": {
+            "title": "Due",
+            "type": "boolean"
+          },
+          "month": {
+            "title": "Month",
+            "type": "string"
+          }
+        },
+        "required": [
+          "due",
+          "month"
+        ],
+        "title": "CheckinDue",
+        "type": "object"
+      },
+      "CheckinIn": {
+        "additionalProperties": false,
+        "properties": {
+          "bills_short": {
+            "description": "Ran short of money for a bill this month",
+            "title": "Bills Short",
+            "type": "boolean"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "followed_plan": {
+            "enum": [
+              "mostly",
+              "partly",
+              "no",
+              "no_plan"
+            ],
+            "title": "Followed Plan",
+            "type": "string"
+          },
+          "missed_need_deadline": {
+            "description": "Missed a deadline for something needed",
+            "title": "Missed Need Deadline",
+            "type": "boolean"
+          },
+          "month": {
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "title": "Month",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "bills_short",
+          "missed_need_deadline",
+          "followed_plan"
+        ],
+        "title": "CheckinIn",
+        "type": "object"
+      },
+      "CommentIn": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "maxLength": 2000,
+            "minLength": 2,
+            "title": "Message",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "CommentIn",
+        "type": "object"
+      },
       "DateChange": {
         "additionalProperties": false,
         "properties": {
@@ -1116,6 +1226,100 @@
         ],
         "title": "EventKind",
         "type": "string"
+      },
+      "FeedbackKind": {
+        "enum": [
+          "comment",
+          "checkin"
+        ],
+        "title": "FeedbackKind",
+        "type": "string"
+      },
+      "FeedbackRead": {
+        "additionalProperties": false,
+        "properties": {
+          "answers": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answers"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/FeedbackKind"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "month": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Month"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "rating",
+          "message",
+          "page",
+          "month",
+          "answers",
+          "created_at"
+        ],
+        "title": "FeedbackRead",
+        "type": "object"
       },
       "ForecastOut": {
         "additionalProperties": false,
@@ -4027,6 +4231,17 @@
             ],
             "title": "Reserve Months"
           },
+          "share_usage": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Share Usage"
+          },
           "timezone": {
             "anyOf": [
               {
@@ -5535,6 +5750,11 @@
             "title": "Reserve Months",
             "type": "integer"
           },
+          "share_usage": {
+            "default": false,
+            "title": "Share Usage",
+            "type": "boolean"
+          },
           "timezone": {
             "title": "Timezone",
             "type": "string"
@@ -6281,6 +6501,123 @@
         "summary": "Register",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/feedback": {
+      "post": {
+        "operationId": "send_feedback_api_v1_feedback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Send Feedback",
+        "tags": [
+          "feedback"
+        ]
+      }
+    },
+    "/api/v1/feedback/checkin": {
+      "get": {
+        "description": "Whether to ask \"How did last month go?\" (once per month, after a few weeks of use).",
+        "operationId": "checkin_due_api_v1_feedback_checkin_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckinDue"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Checkin Due",
+        "tags": [
+          "feedback"
+        ]
+      },
+      "post": {
+        "operationId": "send_checkin_api_v1_feedback_checkin_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckinIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Send Checkin",
+        "tags": [
+          "feedback"
         ]
       }
     },

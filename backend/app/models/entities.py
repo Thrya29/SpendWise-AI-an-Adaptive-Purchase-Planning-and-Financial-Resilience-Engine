@@ -127,6 +127,11 @@ class User(IdMixin, TimestampMixin, Base):
     )
     money_checked_on: Mapped[date | None] = mapped_column(Date)  # user's local date
     last_digest_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Opt-in, pseudonymous usage statistics for improving the product (off by default).
+    share_usage: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
+    last_active_on: Mapped[date | None] = mapped_column(Date)
 
     __table_args__ = (
         CheckConstraint("reserve_months >= 0 AND reserve_months <= 24", name="reserve_months"),
@@ -435,3 +440,44 @@ class GoldPrice(IdMixin, Base):
     fetched_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False
     )
+
+
+class FeedbackKind(StrEnum):
+    COMMENT = "comment"
+    CHECKIN = "checkin"
+
+
+class Feedback(IdMixin, Owned, Base):
+    """Comments and monthly check-ins the user chose to send."""
+
+    __tablename__ = "feedback"
+
+    kind: Mapped[FeedbackKind] = mapped_column(_enum(FeedbackKind), nullable=False)
+    rating: Mapped[int | None] = mapped_column(SmallInteger)
+    message: Mapped[str | None] = mapped_column(String(2000))
+    page: Mapped[str | None] = mapped_column(String(120))
+    month: Mapped[str | None] = mapped_column(String(7))  # check-ins: YYYY-MM
+    answers: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "kind", "month", name="uq_feedback_checkin_month"),
+        CheckConstraint("rating IS NULL OR (rating >= 1 AND rating <= 5)", name="rating_range"),
+    )
+
+
+class UsageEvent(IdMixin, Base):
+    """Pseudonymous product events from users who opted in.
+
+    ``subject`` is a keyed hash of the user id: events can be grouped per person for retention,
+    but not linked back to an account without the server key. No amounts or names are stored.
+    """
+
+    __tablename__ = "usage_events"
+
+    subject: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    event: Mapped[str] = mapped_column(String(40), nullable=False)
+    day: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    value: Mapped[int | None] = mapped_column(Integer)

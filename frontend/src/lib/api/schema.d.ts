@@ -214,6 +214,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send Feedback */
+        post: operations["send_feedback_api_v1_feedback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/feedback/checkin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Checkin Due
+         * @description Whether to ask "How did last month go?" (once per month, after a few weeks of use).
+         */
+        get: operations["checkin_due_api_v1_feedback_checkin_get"];
+        put?: never;
+        /** Send Checkin */
+        post: operations["send_checkin_api_v1_feedback_checkin_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/funds/search": {
         parameters: {
             query?: never;
@@ -1158,6 +1196,44 @@ export interface components {
             message: string;
             observation: components["schemas"]["ObservationOut"] | null;
         };
+        /** CheckinDue */
+        CheckinDue: {
+            /** Due */
+            due: boolean;
+            /** Month */
+            month: string;
+        };
+        /** CheckinIn */
+        CheckinIn: {
+            /**
+             * Bills Short
+             * @description Ran short of money for a bill this month
+             */
+            bills_short: boolean;
+            /** Comment */
+            comment?: string | null;
+            /**
+             * Followed Plan
+             * @enum {string}
+             */
+            followed_plan: "mostly" | "partly" | "no" | "no_plan";
+            /**
+             * Missed Need Deadline
+             * @description Missed a deadline for something needed
+             */
+            missed_need_deadline: boolean;
+            /** Month */
+            month: string;
+        };
+        /** CommentIn */
+        CommentIn: {
+            /** Message */
+            message: string;
+            /** Page */
+            page?: string | null;
+            /** Rating */
+            rating?: number | null;
+        };
         /** DateChange */
         DateChange: {
             /** From */
@@ -1310,6 +1386,37 @@ export interface components {
          * @enum {string}
          */
         EventKind: "income" | "obligation" | "planned" | "emergency";
+        /**
+         * FeedbackKind
+         * @enum {string}
+         */
+        FeedbackKind: "comment" | "checkin";
+        /** FeedbackRead */
+        FeedbackRead: {
+            /** Answers */
+            answers: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["FeedbackKind"];
+            /** Message */
+            message: string | null;
+            /** Month */
+            month: string | null;
+            /** Page */
+            page: string | null;
+            /** Rating */
+            rating: number | null;
+        };
         /** ForecastOut */
         ForecastOut: {
             /** Available */
@@ -2225,6 +2332,8 @@ export interface components {
             reserve_buffer_minor?: number | null;
             /** Reserve Months */
             reserve_months?: number | null;
+            /** Share Usage */
+            share_usage?: boolean | null;
             /** Timezone */
             timezone?: string | null;
         };
@@ -2784,6 +2893,11 @@ export interface components {
             reserve_buffer_minor: number;
             /** Reserve Months */
             reserve_months: number;
+            /**
+             * Share Usage
+             * @default false
+             */
+            share_usage: boolean;
             /** Timezone */
             timezone: string;
         };
@@ -3250,6 +3364,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_feedback_api_v1_feedback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    checkin_due_api_v1_feedback_checkin_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckinDue"];
+                };
+            };
+        };
+    };
+    send_checkin_api_v1_feedback_checkin_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckinIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackRead"];
                 };
             };
             /** @description Validation Error */

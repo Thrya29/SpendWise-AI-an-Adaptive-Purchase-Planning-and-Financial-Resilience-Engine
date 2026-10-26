@@ -43,7 +43,7 @@ from app.schemas.planner import (
     SkippedOut,
     SolverOut,
 )
-from app.services import forecast_service
+from app.services import forecast_service, usage
 from app.services.ledger import load_planning_inputs
 from app.services.repository import OwnedRepository
 
@@ -369,6 +369,7 @@ async def create_plan(session: AsyncSession, user: User, req: PlanRequest, today
         warnings=warnings,
     )  # fmt: skip
     plan.result = out.model_dump(mode="json", by_alias=True)
+    usage.record(session, user, "plan_created", today, len(decisions))
     return out
 
 
@@ -380,6 +381,19 @@ async def get_plan(session: AsyncSession, user: User, plan_id: UUID, today: date
         session, user, today
     )
     return out
+
+
+def _chosen_changes(d: DecisionOut, *, on_time: bool, allow_reserve: bool) -> ItemChanges | str:
+    """The option the user chose for this decision, or why it cannot be applied."""
+    if on_time:
+        if d.on_time_changes is None:
+            return "This plan has no on-time option for it"
+        return d.on_time_changes  # the user accepted the risk shown in the plan
+    if d.requires_reserve_approval and not allow_reserve:
+        if d.alternative_changes is None:
+            return "Needs approval to use the reserve"
+        return d.alternative_changes  # the later, reserve-safe date
+    return d.changes
 
 
 async def apply_plan(
@@ -402,21 +416,10 @@ async def apply_plan(
     for d in out.decisions:
         if wanted is not None and d.item_id not in wanted:
             continue
-        changes = d.changes
-        if d.item_id in on_time:
-            if d.on_time_changes is None:
-                skipped.append(
-                    SkippedOut(item_id=d.item_id, reason="This plan has no on-time option for it")
-                )
-                continue
-            changes = d.on_time_changes  # the user accepted the risk shown in the plan
-        elif d.requires_reserve_approval and not req.allow_reserve:
-            if d.alternative_changes is None:
-                skipped.append(
-                    SkippedOut(item_id=d.item_id, reason="Needs approval to use the reserve")
-                )
-                continue
-            changes = d.alternative_changes  # the later, reserve-safe date
+        changes = _chosen_changes(d, on_time=d.item_id in on_time, allow_reserve=req.allow_reserve)
+        if isinstance(changes, str):
+            skipped.append(SkippedOut(item_id=d.item_id, reason=changes))
+            continue
         values: dict[str, Any] = {}
         if changes.target_date is not None:
             values["target_date"] = changes.target_date.to
@@ -432,4 +435,7 @@ async def apply_plan(
         skipped += [SkippedOut(item_id=i, reason="Not part of this plan") for i in sorted(unknown)]
     plan.status = PlanStatus.APPLIED
     plan.applied_at = utcnow()
+    usage.record(session, user, "plan_applied", today, len(applied))
+    if on_time:
+        usage.record(session, user, "on_time_chosen", today, len(on_time & known))
     return ApplyResponse(plan_id=plan.id, status=plan.status, applied=applied, skipped=skipped)

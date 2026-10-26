@@ -247,6 +247,45 @@ function NotificationsCard({ user, onSaved }: { user: User; onSaved: (u: User) =
   );
 }
 
+function ResearchCard({ user, onSaved }: { user: User; onSaved: (u: User) => void }) {
+  const [feedback, setFeedback] = useState<Feedback>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function toggle(on: boolean) {
+    setBusy(true);
+    setFeedback(null);
+    try {
+      onSaved(await api<User>("/me", { method: "PATCH", body: { share_usage: on } }));
+      setFeedback({
+        tone: "success",
+        text: on ? "Thank you — sharing is on." : "Sharing is off and what was shared is deleted.",
+      });
+    } catch (err) {
+      setFeedback({ tone: "danger", text: errorText(err, "Could not save.") });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card
+      title="Help improve SpendWise"
+      description="Share which steps you use (for example: imported a statement, ran the planner), so we can see where people get stuck."
+    >
+      <div className="flex flex-col gap-3">
+        {feedback && <Alert tone={feedback.tone}>{feedback.text}</Alert>}
+        <Checkbox
+          label="Share usage statistics"
+          hint="Off by default. Records the day and the step only, under a code that isn't your account ID. Never amounts, names or anything you type. Turning it off deletes what was shared."
+          checked={user.share_usage ?? false}
+          disabled={busy}
+          onChange={(e) => void toggle(e.target.checked)}
+        />
+      </div>
+    </Card>
+  );
+}
+
 function AssistantCard({ user, onSaved }: { user: User; onSaved: (u: User) => void }) {
   const [mode, setMode] = useState(user.llm_mode);
   const [feedback, setFeedback] = useState<Feedback>(null);
@@ -556,6 +595,7 @@ export default function SettingsPage() {
         <div className="flex flex-col gap-6">
           <ReserveCard user={user} onSaved={setUser} />
           <NotificationsCard user={user} onSaved={setUser} />
+          <ResearchCard user={user} onSaved={setUser} />
           <AssistantCard user={user} onSaved={setUser} />
           <DataCard />
         </div>
