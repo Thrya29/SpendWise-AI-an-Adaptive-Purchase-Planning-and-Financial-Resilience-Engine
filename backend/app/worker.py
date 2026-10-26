@@ -32,7 +32,7 @@ from app.models.entities import (
     User,
     WatchedFund,
 )
-from app.services import fx_service, insights_data, market_service
+from app.services import fx_service, insights_data, market_service, notification_service
 
 logger = logging.getLogger("spendwise.worker")
 
@@ -163,10 +163,32 @@ async def refresh_reference_data_if_due(client: httpx.AsyncClient) -> list[str]:
     return done
 
 
+async def notify_users(now: datetime | None = None) -> tuple[int, int]:
+    """Daily money reminders and email digests. Returns (alerts created, emails sent)."""
+    now = now or utcnow()
+    async with get_sessionmaker()() as session:
+        user_ids = list(await session.scalars(select(User.id)))
+    created = sent = 0
+    for user_id in user_ids:
+        async with get_sessionmaker()() as session:
+            user = await session.get(User, user_id)
+            if user is None:
+                continue
+            try:
+                created += len(await notification_service.money_alerts(session, user, now))
+                sent += await notification_service.send_digest(session, user, now)
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                logger.exception("notify_failed", extra={"user_id": str(user_id)})
+    return created, sent
+
+
 async def run_once(client: httpx.AsyncClient, fetcher: SafeFetcher) -> None:
     await refresh_fx_if_due(client)
     await refresh_reference_data_if_due(client)
     await check_due_prices(fetcher)
+    await notify_users()
 
 
 async def main() -> None:

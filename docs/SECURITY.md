@@ -17,10 +17,11 @@ vulnerability** on this repository. Do not open a public issue.
 | Transport & headers | `nosniff`, `X-Frame-Options: DENY`, strict referrer policy, restrictive permissions policy, `no-store` on API responses, no `X-Powered-By` |
 | Network | Only the web container is published, on 127.0.0.1; API, DB and Redis are on private networks |
 | Containers | Non-root users, read-only root filesystems, `no-new-privileges`, health checks |
-| Input | Strict Pydantic schemas (`extra="forbid"`), URL scheme validation, LIKE-wildcard escaping, 1 MB proxy body cap, proxy path-traversal rejection |
+| Input | Strict Pydantic schemas (`extra="forbid"`), URL scheme validation, LIKE-wildcard escaping, 1 MB proxy body cap (3.5 MB for statement uploads only), proxy path-traversal rejection |
 | AI | Optional and per user; keys encrypted at rest (Fernet) and never returned; assistant and planner rate-limited per user (20 and 30 per minute); model output schema-constrained and re-validated; user text treated as data, not instructions; numbers in summaries must come from the engine; every failure falls back to the offline assistant |
 | Outbound fetching (SSRF) | http/https on default ports only; every resolved address must be public (loopback, private, link-local incl. 169.254.169.254, multicast and reserved refused, also as IPv4-mapped IPv6); redirects re-validated per hop (max 3); 2 MB / 15 s caps; HTML only; robots.txt honoured; per-user rate limits. Residual DNS-rebinding risk documented in ADR 0006 |
-| Privacy | Minimal data collection; full JSON export; permanent account deletion (cascading) |
+| Privacy | Minimal data collection; full JSON export; permanent account deletion (cascading); uploaded bank statements are parsed in memory and never stored or logged, only the confirmed income and bills are saved |
+| Email | Optional SMTP, opt-in per user, at most one digest a day; STARTTLS or implicit TLS with certificate verification; CR/LF stripped from headers so item names cannot inject headers; failures retried after an hour, not in a loop |
 | Supply chain | Locked runtime Python dependencies + `pip-audit`; `npm audit` on production dependencies in CI |
 
 ## Known, accepted advisories

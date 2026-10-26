@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _INSECURE_DEFAULT = "dev-only-insecure-secret-change-me-in-production"
@@ -38,6 +38,17 @@ class Settings(BaseSettings):
     mfapi_url: str = "https://api.mfapi.in/mf"
     gold_url: str = "https://api.gold-api.com/price/XAU"
     # Background worker cadence
+    # Email notifications (optional). Without smtp_host, alerts are shown in the app only.
+    smtp_host: str | None = None
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    smtp_username: str | None = None
+    smtp_password: SecretStr | None = None
+    smtp_starttls: bool = True
+    smtp_from: str = "SpendWise <no-reply@localhost>"
+    app_url: str = "http://localhost:3000"
+    digest_hours: int = Field(default=20, ge=1, le=168)
+    morning_hour: int = Field(default=7, ge=0, le=23)  # money alerts after this local hour
+
     price_check_hours: int = Field(default=12, ge=1, le=168)
     fx_refresh_hours: int = Field(default=6, ge=1, le=48)
 

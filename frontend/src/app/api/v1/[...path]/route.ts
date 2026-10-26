@@ -11,6 +11,8 @@ import type { NextRequest } from "next/server";
 const UPSTREAM = (process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
 const TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 1_000_000;
+// Statement uploads carry a whole CSV export (up to 3 MB of text plus JSON escaping).
+const LARGE_BODY_PATHS: Record<string, number> = { "imports/statement/preview": 3_500_000 };
 
 const FORWARD_REQUEST_HEADERS = [
   "accept",
@@ -55,10 +57,11 @@ async function proxy(request: NextRequest, ctx: RouteContext<"/api/v1/[...path]"
 
   let body: ArrayBuffer | undefined;
   if (request.method !== "GET" && request.method !== "HEAD") {
+    const limit = LARGE_BODY_PATHS[path.join("/")] ?? MAX_BODY_BYTES;
     const declared = Number(request.headers.get("content-length") ?? "0");
-    if (declared > MAX_BODY_BYTES) return problem(400, "Request body too large");
+    if (declared > limit) return problem(400, "Request body too large");
     body = await request.arrayBuffer();
-    if (body.byteLength > MAX_BODY_BYTES) return problem(400, "Request body too large");
+    if (body.byteLength > limit) return problem(400, "Request body too large");
   }
 
   let upstream: Response;

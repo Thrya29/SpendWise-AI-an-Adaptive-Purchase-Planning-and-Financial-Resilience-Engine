@@ -18,6 +18,13 @@ x-api-env: &api-env
   # The API is reachable only from the web container, which forwards the client IP.
   FORWARDED_ALLOW_IPS: "*"
   SPENDWISE_CORS_ORIGINS: '["http://localhost:${WEB_PORT:-3000}"]'
+  SPENDWISE_APP_URL: ${SPENDWISE_APP_URL:-http://localhost:3000}
+  # Optional email reminders; leave SPENDWISE_SMTP_HOST empty to keep them in the app only.
+  SPENDWISE_SMTP_HOST: ${SPENDWISE_SMTP_HOST:-}
+  SPENDWISE_SMTP_PORT: ${SPENDWISE_SMTP_PORT:-587}
+  SPENDWISE_SMTP_USERNAME: ${SPENDWISE_SMTP_USERNAME:-}
+  SPENDWISE_SMTP_PASSWORD: ${SPENDWISE_SMTP_PASSWORD:-}
+  SPENDWISE_SMTP_FROM: ${SPENDWISE_SMTP_FROM:-SpendWise <no-reply@localhost>}
 
 services:
   db:

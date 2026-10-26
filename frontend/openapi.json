@@ -220,7 +220,10 @@
           "price_target",
           "price_drop",
           "check_failing",
-          "back_in_stock"
+          "back_in_stock",
+          "bill_shortfall",
+          "buy_day",
+          "salary_check"
         ],
         "title": "AlertKind",
         "type": "string"
@@ -3987,6 +3990,17 @@
             ],
             "title": "Display Name"
           },
+          "email_notifications": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Notifications"
+          },
           "reserve_buffer_minor": {
             "anyOf": [
               {
@@ -5483,6 +5497,17 @@
             "title": "Email",
             "type": "string"
           },
+          "email_available": {
+            "description": "Whether this server can send email (otherwise reminders are in the app only).",
+            "readOnly": true,
+            "title": "Email Available",
+            "type": "boolean"
+          },
+          "email_notifications": {
+            "default": false,
+            "title": "Email Notifications",
+            "type": "boolean"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -5528,7 +5553,8 @@
           "reserve_buffer_minor",
           "llm_mode",
           "llm_api_key_hint",
-          "created_at"
+          "created_at",
+          "email_available"
         ],
         "title": "UserRead",
         "type": "object"

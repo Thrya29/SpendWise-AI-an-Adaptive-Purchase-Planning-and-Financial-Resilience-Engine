@@ -122,6 +122,11 @@ class User(IdMixin, TimestampMixin, Base):
     llm_mode: Mapped[LlmMode] = mapped_column(_enum(LlmMode), nullable=False, default=LlmMode.MOCK)
     llm_api_key_encrypted: Mapped[str | None] = mapped_column(Text)
     llm_api_key_hint: Mapped[str | None] = mapped_column(String(8))
+    email_notifications: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
+    money_checked_on: Mapped[date | None] = mapped_column(Date)  # user's local date
+    last_digest_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
         CheckConstraint("reserve_months >= 0 AND reserve_months <= 24", name="reserve_months"),
@@ -347,6 +352,9 @@ class AlertKind(StrEnum):
     PRICE_DROP = "price_drop"
     CHECK_FAILING = "check_failing"
     BACK_IN_STOCK = "back_in_stock"
+    BILL_SHORTFALL = "bill_shortfall"
+    BUY_DAY = "buy_day"
+    SALARY_CHECK = "salary_check"
 
 
 class Alert(IdMixin, Owned, Base):
@@ -362,6 +370,11 @@ class Alert(IdMixin, Owned, Base):
         DateTime(timezone=True), default=utcnow, nullable=False, index=True
     )
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Money alerts are generated daily; the key stops the same reminder being created twice.
+    dedupe_key: Mapped[str | None] = mapped_column(String(160))
+    emailed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (UniqueConstraint("user_id", "dedupe_key", name="uq_alert_dedupe"),)
 
 
 class FundScheme(Base):

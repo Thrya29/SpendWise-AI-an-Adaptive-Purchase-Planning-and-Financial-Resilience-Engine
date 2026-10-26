@@ -50,6 +50,7 @@ async def update_me(body: ProfileUpdate, user: UserDep, session: SessionDep) -> 
             "timezone",
             "reserve_months",
             "reserve_buffer_minor",
+            "email_notifications",
         }:
             raise DomainValidationError(f"{key} cannot be null")
         setattr(user, key, value)

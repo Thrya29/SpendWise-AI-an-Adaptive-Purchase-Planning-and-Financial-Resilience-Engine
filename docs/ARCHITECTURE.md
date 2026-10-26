@@ -258,7 +258,23 @@ monthly (25–36) or quarterly (80–100). Keyword hints name common bills and m
 `POST /imports/statement/apply` creates only what the user confirmed, skips exact duplicates,
 and can set an account so that today's balance equals the statement's closing balance.
 
-## 16. What comes next
+## 16. Reminders (`services/notification_service.py`, `core/mailer.py`)
+
+The worker calls `notify_users` every tick. For each user, once per local day after
+`SPENDWISE_MORNING_HOUR` (7 by default), it creates:
+
+* `bill_shortfall`: the expected-scenario projection for the next 3 days (planned purchases
+  included) takes the balance below zero on an essential bill's due date;
+* `buy_day`: a planned item's pay date (target date minus lead time) is today;
+* `salary_check`: an income subject to shocks was due yesterday.
+
+Each alert has a dedupe key (`uq_alert_dedupe` on user and key), so reruns and restarts never
+repeat a reminder; `users.money_checked_on` skips the work for the rest of the day. If the user
+opted in and SMTP is configured, unread alerts not yet emailed (from the last 3 days, up to 20)
+go out as one digest, at most once per `SPENDWISE_DIGEST_HOURS`. A failed send is retried
+after an hour.
+
+## 17. What comes next
 
 Phase 7 hardens production: metrics and tracing, load tests of the planner and API, backup and
 restore, and a deployment guide.

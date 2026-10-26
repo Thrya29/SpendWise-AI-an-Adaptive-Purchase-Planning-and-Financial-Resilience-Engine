@@ -8,6 +8,7 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   Dialog,
   Field,
   Input,
@@ -199,6 +200,49 @@ function ReserveCard({ user, onSaved }: { user: User; onSaved: (u: User) => void
           </Button>
         </div>
       </form>
+    </Card>
+  );
+}
+
+function NotificationsCard({ user, onSaved }: { user: User; onSaved: (u: User) => void }) {
+  const [feedback, setFeedback] = useState<Feedback>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function toggle(on: boolean) {
+    setBusy(true);
+    setFeedback(null);
+    try {
+      onSaved(await api<User>("/me", { method: "PATCH", body: { email_notifications: on } }));
+      setFeedback({
+        tone: "success",
+        text: on ? "Email reminders are on." : "Email reminders are off.",
+      });
+    } catch (err) {
+      setFeedback({ tone: "danger", text: errorText(err, "Could not save.") });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card
+      title="Notifications"
+      description="Each morning SpendWise checks for bills you can't cover in the next 3 days, purchases planned for today, and salary that was due yesterday. Reminders always appear under Alerts."
+    >
+      <div className="flex flex-col gap-3">
+        {feedback && <Alert tone={feedback.tone}>{feedback.text}</Alert>}
+        <Checkbox
+          label="Also email me a daily digest"
+          hint={
+            user.email_available
+              ? `At most once a day, to ${user.email}. Emails include amounts and item names.`
+              : "Email isn't set up on this server yet, so reminders stay in the app."
+          }
+          checked={user.email_notifications ?? false}
+          disabled={busy || (!user.email_available && !user.email_notifications)}
+          onChange={(e) => void toggle(e.target.checked)}
+        />
+      </div>
     </Card>
   );
 }
@@ -511,6 +555,7 @@ export default function SettingsPage() {
         </div>
         <div className="flex flex-col gap-6">
           <ReserveCard user={user} onSaved={setUser} />
+          <NotificationsCard user={user} onSaved={setUser} />
           <AssistantCard user={user} onSaved={setUser} />
           <DataCard />
         </div>

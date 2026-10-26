@@ -15,6 +15,16 @@ const KIND: Record<AlertRow["kind"], { label: string; tone: "success" | "brand" 
   price_drop: { label: "Price drop", tone: "brand" },
   back_in_stock: { label: "Back in stock", tone: "brand" },
   check_failing: { label: "Check failing", tone: "warning" },
+  bill_shortfall: { label: "Bill at risk", tone: "warning" },
+  buy_day: { label: "Buy today", tone: "brand" },
+  salary_check: { label: "Salary check", tone: "brand" },
+};
+
+/** Where to act on each kind of alert. */
+const ACTION: Partial<Record<AlertRow["kind"], { href: string; label: string }>> = {
+  bill_shortfall: { href: "/dashboard", label: "See the forecast" },
+  buy_day: { href: "/plan", label: "Open your items" },
+  salary_check: { href: "/planner", label: "Open the planner" },
 };
 
 function notifyBell() {
@@ -45,7 +55,7 @@ export default function AlertsPage() {
     <>
       <PageHeader
         title="Alerts"
-        description="Price drops, prices within your limit, and checks that need your attention."
+        description="Bills at risk, purchases due today, salary check-ins, and price changes on tracked items."
         actions={
           unread > 0 ? (
             <Button variant="secondary" onClick={() => void act("/alerts/read-all")}>
@@ -89,6 +99,14 @@ export default function AlertsPage() {
                   </div>
                   <p className="mt-1.5 font-medium">{a.title}</p>
                   <p className="text-sm text-muted">{a.body}</p>
+                  {ACTION[a.kind] && (
+                    <Link
+                      href={ACTION[a.kind]!.href}
+                      className="mt-1 inline-block text-sm font-medium text-brand hover:underline"
+                    >
+                      {ACTION[a.kind]!.label}
+                    </Link>
+                  )}
                 </div>
                 {!a.read_at && (
                   <Button

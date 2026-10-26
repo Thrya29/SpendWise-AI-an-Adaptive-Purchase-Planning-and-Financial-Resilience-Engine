@@ -4,8 +4,9 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import EmailStr, Field, StringConstraints
+from pydantic import EmailStr, Field, StringConstraints, computed_field
 
+from app.core.mailer import mail_enabled
 from app.models.entities import LlmMode
 from app.schemas.common import ApiModel, Country, Currency, Name, NonNegativeMinor, Timezone
 
@@ -47,7 +48,14 @@ class UserRead(ApiModel):
     reserve_buffer_minor: int
     llm_mode: LlmMode
     llm_api_key_hint: str | None
+    email_notifications: bool = False
     created_at: datetime
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def email_available(self) -> bool:
+        """Whether this server can send email (otherwise reminders are in the app only)."""
+        return mail_enabled()
 
 
 class ProfileUpdate(ApiModel):
@@ -59,6 +67,7 @@ class ProfileUpdate(ApiModel):
     timezone: Timezone | None = None
     reserve_months: Annotated[int, Field(ge=0, le=24)] | None = None
     reserve_buffer_minor: NonNegativeMinor | None = None
+    email_notifications: bool | None = None
 
 
 class LlmSettingsUpdate(ApiModel):

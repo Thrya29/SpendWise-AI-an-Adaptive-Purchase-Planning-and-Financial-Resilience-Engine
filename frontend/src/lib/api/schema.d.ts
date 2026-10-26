@@ -1037,7 +1037,7 @@ export interface components {
          * AlertKind
          * @enum {string}
          */
-        AlertKind: "price_target" | "price_drop" | "check_failing" | "back_in_stock";
+        AlertKind: "price_target" | "price_drop" | "check_failing" | "back_in_stock" | "bill_shortfall" | "buy_day" | "salary_check";
         /** AlertOut */
         AlertOut: {
             /** Body */
@@ -2219,6 +2219,8 @@ export interface components {
             country?: string | null;
             /** Display Name */
             display_name?: string | null;
+            /** Email Notifications */
+            email_notifications?: boolean | null;
             /** Reserve Buffer Minor */
             reserve_buffer_minor?: number | null;
             /** Reserve Months */
@@ -2760,6 +2762,16 @@ export interface components {
             display_name: string;
             /** Email */
             email: string;
+            /**
+             * Email Available
+             * @description Whether this server can send email (otherwise reminders are in the app only).
+             */
+            readonly email_available: boolean;
+            /**
+             * Email Notifications
+             * @default false
+             */
+            email_notifications: boolean;
             /**
              * Id
              * Format: uuid
