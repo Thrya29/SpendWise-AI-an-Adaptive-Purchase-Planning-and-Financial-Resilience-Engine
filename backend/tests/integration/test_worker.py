@@ -73,4 +73,11 @@ async def test_fx_refresh_cadence(client: httpx.AsyncClient) -> None:
     assert await worker.refresh_fx_if_due(fx_client(ecb(date.today()))) is True
     assert await worker.refresh_fx_if_due(fx_client(ecb(date.today()))) is False  # fresh enough
     assert await worker.refresh_fx_if_due(fx_client(lambda _r: httpx.Response(503))) is False
-    await worker.run_once(fx_client(ecb(date.today() - timedelta(days=1))), shop_fetcher(Shop()))
+
+    def fx_only(request: httpx.Request) -> httpx.Response:
+        # Rates are served; every other reference source is down. A cycle must still finish.
+        if request.url.host == "api.frankfurter.dev":
+            return ecb(date.today() - timedelta(days=1))(request)
+        return httpx.Response(404)
+
+    await worker.run_once(fx_client(fx_only), shop_fetcher(Shop()))

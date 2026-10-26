@@ -860,6 +860,152 @@
         "title": "DeleteAccountRequest",
         "type": "object"
       },
+      "DepositIn": {
+        "additionalProperties": false,
+        "properties": {
+          "fd_rate_percent": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Fd Rate Percent"
+          },
+          "months": {
+            "maximum": 120.0,
+            "minimum": 1.0,
+            "title": "Months",
+            "type": "integer"
+          },
+          "premature": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrematureIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "principal_minor": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000000000000000.0,
+            "title": "Principal Minor",
+            "type": "integer"
+          },
+          "savings_rate_percent": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "2.70",
+            "title": "Savings Rate Percent"
+          }
+        },
+        "required": [
+          "principal_minor",
+          "fd_rate_percent",
+          "months"
+        ],
+        "title": "DepositIn",
+        "type": "object"
+      },
+      "DepositOut": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "disclaimer": {
+            "default": "Educational estimate, not investment advice. Check your bank's or fund's exact terms; past performance does not guarantee future returns.",
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "fd_advantage_minor": {
+            "title": "Fd Advantage Minor",
+            "type": "integer"
+          },
+          "fd_interest_minor": {
+            "title": "Fd Interest Minor",
+            "type": "integer"
+          },
+          "fd_maturity_minor": {
+            "title": "Fd Maturity Minor",
+            "type": "integer"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "premature_effective_rate_percent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premature Effective Rate Percent"
+          },
+          "premature_interest_lost_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premature Interest Lost Minor"
+          },
+          "premature_payout_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premature Payout Minor"
+          },
+          "savings_balance_minor": {
+            "title": "Savings Balance Minor",
+            "type": "integer"
+          },
+          "savings_interest_minor": {
+            "title": "Savings Interest Minor",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "currency",
+          "fd_maturity_minor",
+          "fd_interest_minor",
+          "savings_balance_minor",
+          "savings_interest_minor",
+          "fd_advantage_minor",
+          "notes"
+        ],
+        "title": "DepositOut",
+        "type": "object"
+      },
       "EmergencyIn": {
         "additionalProperties": false,
         "properties": {
@@ -1078,6 +1224,253 @@
         "title": "Frequency",
         "type": "string"
       },
+      "FundDetailOut": {
+        "additionalProperties": false,
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "cagr_percent": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Cagr Percent",
+            "type": "object"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "disclaimer": {
+            "default": "Educational estimate, not investment advice. Check your bank's or fund's exact terms; past performance does not guarantee future returns.",
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "fund_house": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fund House"
+          },
+          "history_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History From"
+          },
+          "history_points": {
+            "title": "History Points",
+            "type": "integer"
+          },
+          "history_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History Source"
+          },
+          "isin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isin"
+          },
+          "max_drawdown_percent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Drawdown Percent"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nav": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nav"
+          },
+          "nav_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nav Date"
+          },
+          "scheme_code": {
+            "title": "Scheme Code",
+            "type": "integer"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "volatility_percent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volatility Percent"
+          },
+          "watched": {
+            "title": "Watched",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "scheme_code",
+          "name",
+          "fund_house",
+          "category",
+          "isin",
+          "nav",
+          "nav_date",
+          "active",
+          "source",
+          "history_source",
+          "history_points",
+          "history_from",
+          "cagr_percent",
+          "volatility_percent",
+          "max_drawdown_percent",
+          "watched"
+        ],
+        "title": "FundDetailOut",
+        "type": "object"
+      },
+      "FundOut": {
+        "additionalProperties": false,
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "fund_house": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fund House"
+          },
+          "isin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isin"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nav": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nav"
+          },
+          "nav_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nav Date"
+          },
+          "scheme_code": {
+            "title": "Scheme Code",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scheme_code",
+          "name",
+          "fund_house",
+          "category",
+          "isin",
+          "nav",
+          "nav_date",
+          "active"
+        ],
+        "title": "FundOut",
+        "type": "object"
+      },
       "FxOut": {
         "additionalProperties": false,
         "properties": {
@@ -1128,6 +1521,97 @@
           "source"
         ],
         "title": "FxOut",
+        "type": "object"
+      },
+      "GoldOut": {
+        "additionalProperties": false,
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "caveat": {
+            "default": "International spot price converted at the ECB reference rate. Indian retail rates are higher: they add import duty, GST and dealer margin. Use your jeweller's quoted rate for a bill estimate.",
+            "title": "Caveat",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "fx_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fx Note"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "per_gram_22k_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per Gram 22K Minor"
+          },
+          "per_gram_24k_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per Gram 24K Minor"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "usd_per_ounce": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usd Per Ounce"
+          }
+        },
+        "required": [
+          "available",
+          "currency"
+        ],
+        "title": "GoldOut",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -1557,6 +2041,141 @@
         ],
         "title": "ItemStatus",
         "type": "string"
+      },
+      "JewelleryIn": {
+        "additionalProperties": false,
+        "properties": {
+          "gst_percent": {
+            "anyOf": [
+              {
+                "maximum": 28.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "3",
+            "title": "Gst Percent"
+          },
+          "hallmark_fee_minor": {
+            "default": 0,
+            "maximum": 1000000000000000.0,
+            "minimum": 0.0,
+            "title": "Hallmark Fee Minor",
+            "type": "integer"
+          },
+          "making_per_gram_minor": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Making Per Gram Minor"
+          },
+          "making_percent": {
+            "anyOf": [
+              {
+                "maximum": 50.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Making Percent"
+          },
+          "purity": {
+            "default": "22K",
+            "enum": [
+              "24K",
+              "22K",
+              "18K",
+              "14K"
+            ],
+            "title": "Purity",
+            "type": "string"
+          },
+          "rate_24k_per_gram_minor": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000000000000000.0,
+            "title": "Rate 24K Per Gram Minor",
+            "type": "integer"
+          },
+          "weight_grams": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 10000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Weight Grams"
+          }
+        },
+        "required": [
+          "rate_24k_per_gram_minor",
+          "weight_grams"
+        ],
+        "title": "JewelleryIn",
+        "type": "object"
+      },
+      "JewelleryOut": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "effective_per_gram_minor": {
+            "title": "Effective Per Gram Minor",
+            "type": "integer"
+          },
+          "gold_value_minor": {
+            "title": "Gold Value Minor",
+            "type": "integer"
+          },
+          "gst_minor": {
+            "title": "Gst Minor",
+            "type": "integer"
+          },
+          "hallmark_fee_minor": {
+            "title": "Hallmark Fee Minor",
+            "type": "integer"
+          },
+          "making_charges_minor": {
+            "title": "Making Charges Minor",
+            "type": "integer"
+          },
+          "total_minor": {
+            "title": "Total Minor",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "currency",
+          "gold_value_minor",
+          "making_charges_minor",
+          "hallmark_fee_minor",
+          "gst_minor",
+          "total_minor",
+          "effective_per_gram_minor"
+        ],
+        "title": "JewelleryOut",
+        "type": "object"
       },
       "LinkAlternativeIn": {
         "additionalProperties": false,
@@ -3054,6 +3673,52 @@
         "title": "PlannedItemUpdate",
         "type": "object"
       },
+      "PrematureIn": {
+        "additionalProperties": false,
+        "properties": {
+          "held_months": {
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Held Months",
+            "type": "integer"
+          },
+          "penalty_percent": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "1.0",
+            "title": "Penalty Percent"
+          },
+          "rate_for_held_period_percent": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate For Held Period Percent"
+          }
+        },
+        "required": [
+          "held_months"
+        ],
+        "title": "PrematureIn",
+        "type": "object"
+      },
       "PreviewOut": {
         "additionalProperties": false,
         "properties": {
@@ -3593,6 +4258,86 @@
         "title": "RegisterRequest",
         "type": "object"
       },
+      "SafeToLockOut": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_minor": {
+            "title": "Amount Minor",
+            "type": "integer"
+          },
+          "available_now_minor": {
+            "title": "Available Now Minor",
+            "type": "integer"
+          },
+          "binding_scenario": {
+            "title": "Binding Scenario",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "disclaimer": {
+            "default": "Educational estimate, not investment advice. Check your bank's or fund's exact terms; past performance does not guarantee future returns.",
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "lowest_point_on": {
+            "format": "date",
+            "title": "Lowest Point On",
+            "type": "string"
+          },
+          "monthly_essentials_minor": {
+            "title": "Monthly Essentials Minor",
+            "type": "integer"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "reserve_minor": {
+            "title": "Reserve Minor",
+            "type": "integer"
+          },
+          "runway_months": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runway Months"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "currency",
+          "amount_minor",
+          "months",
+          "available_now_minor",
+          "reserve_minor",
+          "monthly_essentials_minor",
+          "runway_months",
+          "binding_scenario",
+          "lowest_point_on",
+          "explanation",
+          "warnings"
+        ],
+        "title": "SafeToLockOut",
+        "type": "object"
+      },
       "ScenarioOut": {
         "additionalProperties": false,
         "properties": {
@@ -3689,6 +4434,187 @@
         ],
         "title": "ShockMode",
         "type": "string"
+      },
+      "SimulateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "annual_return_percent": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 100.0,
+                "exclusiveMinimum": -50.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Return Percent"
+          },
+          "annual_volatility_percent": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 150.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Volatility Percent"
+          },
+          "compare_fd_rate_percent": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compare Fd Rate Percent"
+          },
+          "initial_minor": {
+            "default": 0,
+            "maximum": 1000000000000000.0,
+            "minimum": 0.0,
+            "title": "Initial Minor",
+            "type": "integer"
+          },
+          "monthly_minor": {
+            "default": 0,
+            "maximum": 1000000000000000.0,
+            "minimum": 0.0,
+            "title": "Monthly Minor",
+            "type": "integer"
+          },
+          "months": {
+            "maximum": 480.0,
+            "minimum": 1.0,
+            "title": "Months",
+            "type": "integer"
+          },
+          "scheme_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Use this fund's historical return and volatility as inputs",
+            "title": "Scheme Code"
+          }
+        },
+        "required": [
+          "months"
+        ],
+        "title": "SimulateIn",
+        "type": "object"
+      },
+      "SimulateOut": {
+        "additionalProperties": false,
+        "properties": {
+          "annual_return_percent": {
+            "title": "Annual Return Percent",
+            "type": "string"
+          },
+          "annual_volatility_percent": {
+            "title": "Annual Volatility Percent",
+            "type": "string"
+          },
+          "assumptions_source": {
+            "title": "Assumptions Source",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "disclaimer": {
+            "default": "Educational estimate, not investment advice. Check your bank's or fund's exact terms; past performance does not guarantee future returns.",
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "fd_value_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fd Value Minor"
+          },
+          "invested_minor": {
+            "title": "Invested Minor",
+            "type": "integer"
+          },
+          "median_max_drawdown": {
+            "title": "Median Max Drawdown",
+            "type": "number"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "p10_minor": {
+            "title": "P10 Minor",
+            "type": "integer"
+          },
+          "p50_minor": {
+            "title": "P50 Minor",
+            "type": "integer"
+          },
+          "p90_minor": {
+            "title": "P90 Minor",
+            "type": "integer"
+          },
+          "paths": {
+            "title": "Paths",
+            "type": "integer"
+          },
+          "probability_of_loss": {
+            "title": "Probability Of Loss",
+            "type": "number"
+          },
+          "seed": {
+            "title": "Seed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "currency",
+          "months",
+          "invested_minor",
+          "p10_minor",
+          "p50_minor",
+          "p90_minor",
+          "probability_of_loss",
+          "median_max_drawdown",
+          "annual_return_percent",
+          "annual_volatility_percent",
+          "assumptions_source",
+          "fd_value_minor",
+          "paths",
+          "seed"
+        ],
+        "title": "SimulateOut",
+        "type": "object"
       },
       "SkippedOut": {
         "additionalProperties": false,
@@ -4153,6 +5079,20 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WatchIn": {
+        "additionalProperties": false,
+        "properties": {
+          "scheme_code": {
+            "title": "Scheme Code",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scheme_code"
+        ],
+        "title": "WatchIn",
         "type": "object"
       }
     },
@@ -4826,6 +5766,243 @@
         ]
       }
     },
+    "/api/v1/funds/search": {
+      "get": {
+        "operationId": "search_funds_api_v1_funds_search_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 3,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_inactive",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Inactive",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FundOut"
+                  },
+                  "title": "Response Search Funds Api V1 Funds Search Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Search Funds",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/funds/watchlist": {
+      "get": {
+        "operationId": "watchlist_api_v1_funds_watchlist_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FundOut"
+                  },
+                  "title": "Response Watchlist Api V1 Funds Watchlist Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Watchlist",
+        "tags": [
+          "insights"
+        ]
+      },
+      "post": {
+        "operationId": "watch_api_v1_funds_watchlist_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FundOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Watch",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/funds/watchlist/{scheme_code}": {
+      "delete": {
+        "operationId": "unwatch_api_v1_funds_watchlist__scheme_code__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheme_code",
+            "required": true,
+            "schema": {
+              "title": "Scheme Code",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unwatch",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/funds/{scheme_code}": {
+      "get": {
+        "description": "Facts about one fund you chose: latest NAV and how it behaved historically.",
+        "operationId": "fund_detail_api_v1_funds__scheme_code__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheme_code",
+            "required": true,
+            "schema": {
+              "title": "Scheme Code",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FundDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Fund Detail",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
     "/api/v1/fx/latest": {
       "get": {
         "operationId": "latest_rates_api_v1_fx_latest_get",
@@ -4875,6 +6052,104 @@
         "summary": "Refresh Rates",
         "tags": [
           "market"
+        ]
+      }
+    },
+    "/api/v1/gold": {
+      "get": {
+        "operationId": "gold_reference_api_v1_gold_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoldOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Gold Reference",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/gold/jewellery": {
+      "post": {
+        "operationId": "jewellery_estimate_api_v1_gold_jewellery_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JewelleryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JewelleryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Jewellery Estimate",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/gold/refresh": {
+      "post": {
+        "operationId": "refresh_gold_api_v1_gold_refresh_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoldOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Refresh Gold",
+        "tags": [
+          "insights"
         ]
       }
     },
@@ -5122,6 +6397,162 @@
         "summary": "Update Row",
         "tags": [
           "income"
+        ]
+      }
+    },
+    "/api/v1/insights/deposit": {
+      "post": {
+        "description": "FD versus savings account, plus what breaking the FD early would pay.",
+        "operationId": "compare_deposit_api_v1_insights_deposit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepositIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Compare Deposit",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/safe-to-lock": {
+      "get": {
+        "operationId": "safe_to_lock_api_v1_insights_safe_to_lock_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "maximum": 60,
+              "minimum": 1,
+              "title": "Months",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "protect_delay_months",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 6,
+              "minimum": 0,
+              "title": "Protect Delay Months",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SafeToLockOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Safe To Lock",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/simulate": {
+      "post": {
+        "description": "A range of possible outcomes for a lump sum and/or monthly SIP, never a single promise.",
+        "operationId": "simulate_investment_api_v1_insights_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulateOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Simulate Investment",
+        "tags": [
+          "insights"
         ]
       }
     },

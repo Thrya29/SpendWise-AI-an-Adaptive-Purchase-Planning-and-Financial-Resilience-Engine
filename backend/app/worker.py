@@ -23,8 +23,16 @@ from app.core.errors import ConflictError
 from app.core.logging import configure_logging
 from app.core.ratelimit import reset_rate_limiter
 from app.market.fetcher import SafeFetcher
-from app.models.entities import FxRate, ItemStatus, PlannedItem, User
-from app.services import fx_service, market_service
+from app.models.entities import (
+    FundNav,
+    FundScheme,
+    FxRate,
+    ItemStatus,
+    PlannedItem,
+    User,
+    WatchedFund,
+)
+from app.services import fx_service, insights_data, market_service
 
 logger = logging.getLogger("spendwise.worker")
 
@@ -108,8 +116,56 @@ async def check_due_prices(
     return found
 
 
+AMFI_EVERY = timedelta(hours=20)
+GOLD_EVERY = timedelta(hours=6)
+HISTORY_EVERY = timedelta(hours=20)
+
+
+async def refresh_reference_data_if_due(client: httpx.AsyncClient) -> list[str]:
+    """AMFI NAVs daily, gold every 6 hours, history for watched funds daily."""
+    done: list[str] = []
+    now = utcnow()
+    async with get_sessionmaker()() as session:
+        newest = await session.scalar(select(func.max(FundScheme.updated_at)))
+        if newest is None or _aware(newest) < now - AMFI_EVERY:
+            try:
+                await insights_data.refresh_schemes(session, client)
+                await session.commit()
+                done.append("amfi")
+            except insights_data.SourceUnavailableError:
+                await session.rollback()
+                logger.warning("amfi_refresh_failed", exc_info=True)
+    async with get_sessionmaker()() as session:
+        gold = await insights_data.latest_gold(session)
+        if gold is None or _aware(gold.fetched_at) < now - GOLD_EVERY:
+            try:
+                await insights_data.refresh_gold(session, client)
+                await session.commit()
+                done.append("gold")
+            except insights_data.SourceUnavailableError:
+                await session.rollback()
+                logger.warning("gold_refresh_failed", exc_info=True)
+    async with get_sessionmaker()() as session:
+        watched = list(await session.scalars(select(WatchedFund.scheme_code).distinct()))
+    for code in watched:
+        async with get_sessionmaker()() as session:
+            last = await session.scalar(
+                select(func.max(FundNav.nav_date)).where(FundNav.scheme_code == code)
+            )
+            if last is not None and last >= (now - HISTORY_EVERY).date() - timedelta(days=3):
+                continue
+            try:
+                await insights_data.refresh_history(session, client, code)
+                await session.commit()
+                done.append(f"history:{code}")
+            except insights_data.SourceUnavailableError:
+                await session.rollback()
+    return done
+
+
 async def run_once(client: httpx.AsyncClient, fetcher: SafeFetcher) -> None:
     await refresh_fx_if_due(client)
+    await refresh_reference_data_if_due(client)
     await check_due_prices(fetcher)
 
 

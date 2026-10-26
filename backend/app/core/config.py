@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     max_page_size: int = Field(default=200, ge=1, le=1000)
 
     fx_url: str = "https://api.frankfurter.dev/v1/latest"
+    amfi_url: str = "https://portal.amfiindia.com/spages/NAVAll.txt"
+    mfapi_url: str = "https://api.mfapi.in/mf"
+    gold_url: str = "https://api.gold-api.com/price/XAU"
     # Background worker cadence
     price_check_hours: int = Field(default=12, ge=1, le=168)
     fx_refresh_hours: int = Field(default=6, ge=1, le=48)

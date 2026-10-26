@@ -13,6 +13,7 @@ const NAV = [
   { href: "/plan", label: "Needs, wants & desires" },
   { href: "/planner", label: "Planner" },
   { href: "/money", label: "Money" },
+  { href: "/insights", label: "Savings & investing" },
   { href: "/settings", label: "Settings" },
 ];
 

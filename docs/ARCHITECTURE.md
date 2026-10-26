@@ -201,8 +201,24 @@ ECB reference rates (daily) ─► FxRate rows ─► RateTable ─► Converter
   resumed up to 3 times). A suggestion is kept only if its page appears among that request's
   search results. Suggested products open the item form **without a price**.
 
-## 13. What comes next
+## 13. Savings and investment education
 
-Phase 5 adds savings and investment *education*: runway, FD vs. liquid comparisons, mutual-fund NAVs
-and gold, all sourced and timestamped. It stays strictly within explanation and simulation, with
-no individual recommendations to buy securities.
+[ADR 0008](adr/0008-savings-and-investment-education.md) sets the boundary: explain and simulate,
+never recommend a security.
+
+* `domain/savings.py`: FD maturity (quarterly compounding from 6 months), early withdrawal, savings
+  account interest, and gold purity and jewellery bills. All in exact Decimal on minor units.
+* `domain/investing.py`: fund statistics from NAV history (1/3/5-year annualised returns, volatility,
+  maximum drawdown) and a seeded Monte Carlo of SIP or lump-sum outcomes.
+* `services/insights_service.py`: the safe-to-lock amount uses the same cash-flow engine and
+  planning inputs as the planner.
+* `services/insights_data.py`: the AMFI file parser and batched upsert (PostgreSQL and SQLite
+  dialects), the mfapi.in history loader, and the gold spot price. All come from fixed URLs with
+  size and time caps. The worker refreshes them (AMFI and fund history daily, gold every 6 hours).
+
+## 14. What comes next
+
+Phase 6 benchmarks the planner against simple budgeting rules (buy immediately, buy at the
+target date, a fixed price threshold, priority-first greedy) under simulated salary delays and
+emergencies. It measures essential-expense coverage, reserve breaches, cost, goals met and
+missed deadlines.

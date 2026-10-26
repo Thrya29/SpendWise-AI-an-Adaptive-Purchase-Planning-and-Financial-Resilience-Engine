@@ -362,3 +362,63 @@ class Alert(IdMixin, Owned, Base):
         DateTime(timezone=True), default=utcnow, nullable=False, index=True
     )
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class FundScheme(Base):
+    """One mutual-fund scheme from AMFI's daily NAV file (official source)."""
+
+    __tablename__ = "fund_schemes"
+
+    scheme_code: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
+    name: Mapped[str] = mapped_column(String(300), nullable=False, index=True)
+    fund_house: Mapped[str | None] = mapped_column(String(150))
+    category: Mapped[str | None] = mapped_column(String(200))
+    isin: Mapped[str | None] = mapped_column(String(12))
+    nav: Mapped[str | None] = mapped_column(String(24))  # exact decimal string as published
+    nav_date: Mapped[date | None] = mapped_column(Date)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+
+class FundNav(Base):
+    """Historical NAVs for schemes someone watches (community mirror of AMFI data)."""
+
+    __tablename__ = "fund_navs"
+
+    scheme_code: Mapped[int] = mapped_column(
+        Integer, ForeignKey("fund_schemes.scheme_code", ondelete="CASCADE"), primary_key=True
+    )
+    nav_date: Mapped[date] = mapped_column(Date, primary_key=True)
+    nav: Mapped[str] = mapped_column(String(24), nullable=False)
+
+
+class WatchedFund(IdMixin, Owned, Base):
+    __tablename__ = "watched_funds"
+
+    scheme_code: Mapped[int] = mapped_column(
+        Integer, ForeignKey("fund_schemes.scheme_code", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "scheme_code", name="uq_watched_funds_user_scheme"),
+    )
+
+
+class GoldPrice(IdMixin, Base):
+    """International spot reference (excludes import duty and taxes)."""
+
+    __tablename__ = "gold_prices"
+
+    source: Mapped[str] = mapped_column(String(100), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    price_per_ounce_minor: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    observed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+    fetched_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )

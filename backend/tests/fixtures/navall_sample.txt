@@ -1,0 +1,42 @@
+Scheme Code;ISIN Div Payout/ ISIN Growth;ISIN Div Reinvestment;Scheme Name;Plan;Option;Net Asset Value;Date
+ 
+Open Ended Schemes(Children’s Fund - Childrens' Fund)
+ 
+Axis Mutual Fund
+ 
+135762;INF846K01WO1;-;Axis Children's Fund;Direct Plan;Growth Option;28.8435;22-Oct-2026
+135765;INF846K01WP8;-;Axis Children's Fund;Direct Plan;IDCW Option;26.5701;22-Oct-2026
+135759;INF846K01WJ1;-;Axis Children's Fund;Regular Plan;Growth Option;25.0956;22-Oct-2026
+135760;INF846K01WK9;-;Axis Children's Fund;Regular Plan;IDCW Option;23.1527;22-Oct-2026
+135764;INF846K01WR4;-;Axis Children's Fund;Direct Plan;Growth Option;29.3951;22-Oct-2026
+135763;INF846K01WS2;INF846K01WQ6;Axis Children's Fund;Direct Plan;IDCW Option;26.6203;22-Oct-2026
+135766;INF846K01WM5;-;Axis Children's Fund;Regular Plan;Growth Option;25.0925;22-Oct-2026
+135761;INF846K01WN3;INF846K01WL7;Axis Children's Fund;Regular Plan;IDCW Option;23.1318;22-Oct-2026
+ 
+Open Ended Schemes(Debt Scheme - Banking and PSU Fund)
+ 
+Franklin Templeton Mutual Fund
+ 
+129008;INF090I01KR8;-;Franklin India Banking & PSU Debt Fund;Direct Plan;Growth;25.2786;22-Oct-2026
+129006;INF090I01KO5;-;Franklin India Banking & PSU Debt Fund;Regular Plan;Growth;24.1040;22-Oct-2026
+129009;INF090I01KS6;INF090I01KT4;Franklin India Banking & PSU Debt Fund;Direct Plan;IDCW;11.4388;22-Oct-2026
+129007;INF090I01KP2;INF090I01KQ0;Franklin India Banking & PSU Debt Fund;Regular Plan;IDCW;10.8216;22-Oct-2026
+ 
+HDFC Mutual Fund
+ 
+128628;INF179KA1JC4;-;HDFC Banking and PSU Debt Fund;Regular Plan;Growth Option;24.2053;22-Oct-2026
+128629;INF179KA1IZ7;-;HDFC Banking and PSU Debt Fund;Direct Plan;Growth Option;25.3259;22-Oct-2026
+128627;INF179KA1JD2;INF179KA1JE0;HDFC Banking and PSU Debt Fund;Regular Plan;IDCW Option;10.0396;22-Oct-2026
+128626;INF179KA1JA8;INF179KA1JB6;HDFC Banking and PSU Debt Fund;Direct Plan;IDCW Option;9.9378;22-Oct-2026
+ 
+ITI Mutual Fund
+ 
+148534;INF00XX01861;-;ITI Banking & PSU Debt Fund;Direct Plan;Growth Option;14.2015;22-Oct-2026
+148536;INF00XX01879;INF00XX01887;ITI Banking & PSU Debt Fund;Direct Plan;IDCW Option;14.1999;22-Oct-2026
+148535;INF00XX01838;-;ITI Banking & PSU Debt Fund;Regular Plan;Growth Option;13.7425;22-Oct-2026
+148533;INF00XX01846;INF00XX01853;ITI Banking & PSU Debt Fund;Regular Plan;IDCW Option;13.7437;22-Oct-2026
+ 
+Kotak Mahindra Mutual Fund
+ 
+148313;INF090I01VS3;-;Franklin India Short-Term Income Plan (no. of segregated portfolios- 3);Direct Plan;Retail Plan Growth;0.0000;22-Oct-2026
+118567;INF090I01GN5;INF090I01GO3;Franklin India Short-Term Income Plan (no. of segregated portfolios- 3);Direct Plan;;4281.4140;02-May-2025

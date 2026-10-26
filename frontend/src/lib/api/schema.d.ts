@@ -214,6 +214,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/funds/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Funds */
+        get: operations["search_funds_api_v1_funds_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/funds/watchlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Watchlist */
+        get: operations["watchlist_api_v1_funds_watchlist_get"];
+        put?: never;
+        /** Watch */
+        post: operations["watch_api_v1_funds_watchlist_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/funds/watchlist/{scheme_code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unwatch */
+        delete: operations["unwatch_api_v1_funds_watchlist__scheme_code__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/funds/{scheme_code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fund Detail
+         * @description Facts about one fund you chose: latest NAV and how it behaved historically.
+         */
+        get: operations["fund_detail_api_v1_funds__scheme_code__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/fx/latest": {
         parameters: {
             query?: never;
@@ -242,6 +314,57 @@ export interface paths {
         put?: never;
         /** Refresh Rates */
         post: operations["refresh_rates_api_v1_fx_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gold Reference */
+        get: operations["gold_reference_api_v1_gold_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gold/jewellery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Jewellery Estimate */
+        post: operations["jewellery_estimate_api_v1_gold_jewellery_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gold/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh Gold */
+        post: operations["refresh_gold_api_v1_gold_refresh_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -283,6 +406,63 @@ export interface paths {
         head?: never;
         /** Update Row */
         patch: operations["update_row_api_v1_incomes__obj_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/insights/deposit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Compare Deposit
+         * @description FD versus savings account, plus what breaking the FD early would pay.
+         */
+        post: operations["compare_deposit_api_v1_insights_deposit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/safe-to-lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Safe To Lock */
+        get: operations["safe_to_lock_api_v1_insights_safe_to_lock_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/simulate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulate Investment
+         * @description A range of possible outcomes for a lump sum and/or monthly SIP, never a single promise.
+         */
+        post: operations["simulate_investment_api_v1_insights_simulate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/items": {
@@ -1013,6 +1193,49 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** DepositIn */
+        DepositIn: {
+            /** Fd Rate Percent */
+            fd_rate_percent: number | string;
+            /** Months */
+            months: number;
+            premature?: components["schemas"]["PrematureIn"] | null;
+            /** Principal Minor */
+            principal_minor: number;
+            /**
+             * Savings Rate Percent
+             * @default 2.70
+             */
+            savings_rate_percent: number | string;
+        };
+        /** DepositOut */
+        DepositOut: {
+            /** Currency */
+            currency: string;
+            /**
+             * Disclaimer
+             * @default Educational estimate, not investment advice. Check your bank's or fund's exact terms; past performance does not guarantee future returns.
+             */
+            disclaimer: string;
+            /** Fd Advantage Minor */
+            fd_advantage_minor: number;
+            /** Fd Interest Minor */
+            fd_interest_minor: number;
+            /** Fd Maturity Minor */
+            fd_maturity_minor: number;
+            /** Notes */
+            notes: string[];
+            /** Premature Effective Rate Percent */
+            premature_effective_rate_percent?: string | null;
+            /** Premature Interest Lost Minor */
+            premature_interest_lost_minor?: number | null;
+            /** Premature Payout Minor */
+            premature_payout_minor?: number | null;
+            /** Savings Balance Minor */
+            savings_balance_minor: number;
+            /** Savings Interest Minor */
+            savings_interest_minor: number;
+        };
         /** EmergencyIn */
         EmergencyIn: {
             /** Amount Minor */
@@ -1078,6 +1301,67 @@ export interface components {
          * @enum {string}
          */
         Frequency: "once" | "weekly" | "monthly" | "quarterly" | "yearly";
+        /** FundDetailOut */
+        FundDetailOut: {
+            /** Active */
+            active: boolean;
+            /** Cagr Percent */
+            cagr_percent: {
+                [key: string]: string;
+            };
+            /** Category */
+            category: string | null;
+            /**
+             * Disclaimer
+             * @default Educational estimate, not investment advice. Check your bank's or fund's exact terms; past performance does not guarantee future returns.
+             */
+            disclaimer: string;
+            /** Fund House */
+            fund_house: string | null;
+            /** History From */
+            history_from: string | null;
+            /** History Points */
+            history_points: number;
+            /** History Source */
+            history_source: string | null;
+            /** Isin */
+            isin: string | null;
+            /** Max Drawdown Percent */
+            max_drawdown_percent: string | null;
+            /** Name */
+            name: string;
+            /** Nav */
+            nav: string | null;
+            /** Nav Date */
+            nav_date: string | null;
+            /** Scheme Code */
+            scheme_code: number;
+            /** Source */
+            source: string;
+            /** Volatility Percent */
+            volatility_percent: string | null;
+            /** Watched */
+            watched: boolean;
+        };
+        /** FundOut */
+        FundOut: {
+            /** Active */
+            active: boolean;
+            /** Category */
+            category: string | null;
+            /** Fund House */
+            fund_house: string | null;
+            /** Isin */
+            isin: string | null;
+            /** Name */
+            name: string;
+            /** Nav */
+            nav: string | null;
+            /** Nav Date */
+            nav_date: string | null;
+            /** Scheme Code */
+            scheme_code: number;
+        };
         /** FxOut */
         FxOut: {
             /** As Of */
@@ -1095,6 +1379,30 @@ export interface components {
             };
             /** Source */
             source: string | null;
+        };
+        /** GoldOut */
+        GoldOut: {
+            /** Available */
+            available: boolean;
+            /**
+             * Caveat
+             * @default International spot price converted at the ECB reference rate. Indian retail rates are higher: they add import duty, GST and dealer margin. Use your jeweller's quoted rate for a bill estimate.
+             */
+            caveat: string;
+            /** Currency */
+            currency: string;
+            /** Fx Note */
+            fx_note?: string | null;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Per Gram 22K Minor */
+            per_gram_22k_minor?: number | null;
+            /** Per Gram 24K Minor */
+            per_gram_24k_minor?: number | null;
+            /** Source */
+            source?: string | null;
+            /** Usd Per Ounce */
+            usd_per_ounce?: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1231,6 +1539,50 @@ export interface components {
          * @enum {string}
          */
         ItemStatus: "planned" | "purchased" | "postponed" | "dropped";
+        /** JewelleryIn */
+        JewelleryIn: {
+            /**
+             * Gst Percent
+             * @default 3
+             */
+            gst_percent: number | string;
+            /**
+             * Hallmark Fee Minor
+             * @default 0
+             */
+            hallmark_fee_minor: number;
+            /** Making Per Gram Minor */
+            making_per_gram_minor?: number | null;
+            /** Making Percent */
+            making_percent?: number | string | null;
+            /**
+             * Purity
+             * @default 22K
+             * @enum {string}
+             */
+            purity: "24K" | "22K" | "18K" | "14K";
+            /** Rate 24K Per Gram Minor */
+            rate_24k_per_gram_minor: number;
+            /** Weight Grams */
+            weight_grams: number | string;
+        };
+        /** JewelleryOut */
+        JewelleryOut: {
+            /** Currency */
+            currency: string;
+            /** Effective Per Gram Minor */
+            effective_per_gram_minor: number;
+            /** Gold Value Minor */
+            gold_value_minor: number;
+            /** Gst Minor */
+            gst_minor: number;
+            /** Hallmark Fee Minor */
+            hallmark_fee_minor: number;
+            /** Making Charges Minor */
+            making_charges_minor: number;
+            /** Total Minor */
+            total_minor: number;
+        };
         /** LinkAlternativeIn */
         LinkAlternativeIn: {
             /**
@@ -1748,6 +2100,18 @@ export interface components {
              */
             version: number;
         };
+        /** PrematureIn */
+        PrematureIn: {
+            /** Held Months */
+            held_months: number;
+            /**
+             * Penalty Percent
+             * @default 1.0
+             */
+            penalty_percent: number | string;
+            /** Rate For Held Period Percent */
+            rate_for_held_period_percent?: number | string | null;
+        };
         /** PreviewOut */
         PreviewOut: {
             availability: components["schemas"]["Availability"];
@@ -1906,6 +2270,39 @@ export interface components {
              */
             timezone: string;
         };
+        /** SafeToLockOut */
+        SafeToLockOut: {
+            /** Amount Minor */
+            amount_minor: number;
+            /** Available Now Minor */
+            available_now_minor: number;
+            /** Binding Scenario */
+            binding_scenario: string;
+            /** Currency */
+            currency: string;
+            /**
+             * Disclaimer
+             * @default Educational estimate, not investment advice. Check your bank's or fund's exact terms; past performance does not guarantee future returns.
+             */
+            disclaimer: string;
+            /** Explanation */
+            explanation: string;
+            /**
+             * Lowest Point On
+             * Format: date
+             */
+            lowest_point_on: string;
+            /** Monthly Essentials Minor */
+            monthly_essentials_minor: number;
+            /** Months */
+            months: number;
+            /** Reserve Minor */
+            reserve_minor: number;
+            /** Runway Months */
+            runway_months: string | null;
+            /** Warnings */
+            warnings: string[];
+        };
         /** ScenarioOut */
         ScenarioOut: {
             /** First Negative On */
@@ -1941,6 +2338,68 @@ export interface components {
          * @enum {string}
          */
         ShockMode: "delayed" | "lost";
+        /** SimulateIn */
+        SimulateIn: {
+            /** Annual Return Percent */
+            annual_return_percent?: number | string | null;
+            /** Annual Volatility Percent */
+            annual_volatility_percent?: number | string | null;
+            /** Compare Fd Rate Percent */
+            compare_fd_rate_percent?: number | string | null;
+            /**
+             * Initial Minor
+             * @default 0
+             */
+            initial_minor: number;
+            /**
+             * Monthly Minor
+             * @default 0
+             */
+            monthly_minor: number;
+            /** Months */
+            months: number;
+            /**
+             * Scheme Code
+             * @description Use this fund's historical return and volatility as inputs
+             */
+            scheme_code?: number | null;
+        };
+        /** SimulateOut */
+        SimulateOut: {
+            /** Annual Return Percent */
+            annual_return_percent: string;
+            /** Annual Volatility Percent */
+            annual_volatility_percent: string;
+            /** Assumptions Source */
+            assumptions_source: string;
+            /** Currency */
+            currency: string;
+            /**
+             * Disclaimer
+             * @default Educational estimate, not investment advice. Check your bank's or fund's exact terms; past performance does not guarantee future returns.
+             */
+            disclaimer: string;
+            /** Fd Value Minor */
+            fd_value_minor: number | null;
+            /** Invested Minor */
+            invested_minor: number;
+            /** Median Max Drawdown */
+            median_max_drawdown: number;
+            /** Months */
+            months: number;
+            /** P10 Minor */
+            p10_minor: number;
+            /** P50 Minor */
+            p50_minor: number;
+            /** P90 Minor */
+            p90_minor: number;
+            /** Paths */
+            paths: number;
+            /** Probability Of Loss */
+            probability_of_loss: number;
+            /** Seed */
+            seed: number;
+        };
         /** SkippedOut */
         SkippedOut: {
             /**
@@ -2116,6 +2575,11 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WatchIn */
+        WatchIn: {
+            /** Scheme Code */
+            scheme_code: number;
         };
     };
     responses: never;
@@ -2575,6 +3039,152 @@ export interface operations {
             };
         };
     };
+    search_funds_api_v1_funds_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                include_inactive?: boolean;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FundOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    watchlist_api_v1_funds_watchlist_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FundOut"][];
+                };
+            };
+        };
+    };
+    watch_api_v1_funds_watchlist_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WatchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FundOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unwatch_api_v1_funds_watchlist__scheme_code__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheme_code: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fund_detail_api_v1_funds__scheme_code__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheme_code: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FundDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     latest_rates_api_v1_fx_latest_get: {
         parameters: {
             query?: never;
@@ -2611,6 +3221,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FxOut"];
+                };
+            };
+        };
+    };
+    gold_reference_api_v1_gold_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoldOut"];
+                };
+            };
+        };
+    };
+    jewellery_estimate_api_v1_gold_jewellery_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JewelleryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JewelleryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_gold_api_v1_gold_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoldOut"];
                 };
             };
         };
@@ -2762,6 +3445,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IncomeRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compare_deposit_api_v1_insights_deposit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepositIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    safe_to_lock_api_v1_insights_safe_to_lock_get: {
+        parameters: {
+            query?: {
+                months?: number;
+                protect_delay_months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SafeToLockOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    simulate_investment_api_v1_insights_simulate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimulateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulateOut"];
                 };
             };
             /** @description Validation Error */
