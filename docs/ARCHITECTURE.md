@@ -304,7 +304,25 @@ after an hour.
 * CI's `stack` job runs Compose, the Playwright phone test (`e2e/`), `backend/scripts/loadtest.py`,
   and `scripts/backup.sh` / `scripts/restore.sh --into`.
 
-## 19. What comes next
+## 19. Browser extension (`extension/`, `routes/extension.py`)
+
+Manifest V3, no build step. `extract.js` is injected into the active tab only when the user
+clicks (`activeTab` + `scripting`) and reads, most reliable first: JSON-LD `Product` offers,
+product meta tags and microdata, known Amazon and Flipkart price elements, and finally the
+largest-font currency amount near the top of the page (not struck out), marked "please check".
+The popup shows the result for confirmation and posts it with an extension key:
+
+```
+POST /me/extension-keys          create (shown once)    GET, DELETE /me/extension-keys/{id}
+GET  /extension/items            items to attach a price to
+POST /extension/capture          {url, price_minor, currency, item_id | new_item, use_price}
+```
+
+A capture appends a `PriceObservation` with method `browser`, runs the usual price-drop and
+within-limit alerts, and (by default) makes it the planning price. The extractor is tested in a
+real browser against sample pages (`e2e/tests/extension-extract.spec.ts`).
+
+## 20. What comes next
 
 All seven phases are complete. Candidates for the next round, best decided with
 pilot results ([PILOT.md](PILOT.md)):
@@ -314,4 +332,7 @@ pilot results ([PILOT.md](PILOT.md)):
 * A nonce-based Content-Security-Policy, so inline scripts no longer need `'unsafe-inline'`.
 * Live bank data through the RBI Account Aggregator framework, which requires a licensed partner.
 * PDF statement import for banks that don't offer CSV.
+* Publishing the extension in the Chrome Web Store and Edge Add-ons, so it installs in one click.
+* Automatic price tracking on large marketplaces through official affiliate APIs (Amazon
+  Product Advertising API) or licensed price data, if the project qualifies.
 * Repeating the planner benchmark on real (consented, pseudonymous) cash flows.

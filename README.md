@@ -23,6 +23,7 @@ emergency reserve, and what happens if your **salary is delayed** or an **emerge
 | **Purchase planner** | Chooses the best month and day to buy each item, or postpones it, so your balance never drops below your reserve, **even if salary is late or lost** (you choose which shocks to guard against). It is an exact constraint solver (OR-Tools CP-SAT), not a heuristic. Every decision has a reason: postponed items show the exact extra money needed and by when. Nothing changes until you approve, and using the reserve always needs explicit consent. On 500 simulated households living through salary delays, losses and emergencies, it caused **3.8% avoidable overdrafts against 42.7% for a careful keep-a-buffer rule** and 89% for buying when you can ([benchmark](docs/results/planner-benchmark.md)). |
 | **Prices from links** | Paste a product link and SpendWise reads the price the page publishes for search engines (schema.org data), along with its source, time and stock status. Every check is kept as price history, and you can also record quotes from local shops. Your planning price changes only when you click *Use this price* or turn on *Track this price*. Every price shows where it came from and how old it is. |
 | **Reminders** | Each morning: a bill due in the next 3 days that your balance can't cover (with the exact shortfall), a purchase planned for today, and a check-in the day after salary is due ("Did it arrive? If not, replan"). Shown under Alerts, and optionally emailed as one daily digest (opt-in; needs an SMTP server in `.env`). |
+| **Browser extension** | *Save to SpendWise* for Chrome and Edge: on any product page (Amazon, Flipkart and most shops), click the icon. It reads the name and price from the page you're viewing, you confirm or correct them, and they go into a new or existing item's price history. It uses a key that can only list items and save prices, and it never runs in the background ([install](extension/README.md)). |
 | **Price alerts** | For tracked items: a price at or below your maximum, a drop of 5% or more, back in stock, or checks that keep failing. A background worker re-checks twice a day, politely spacing out visits to each site. |
 | **Price outlook** | *"64% chance of ₹53,000 or less by 22 Nov (medium confidence)"*, based only on the item's own price history. It counts past sales and drops, and shows no forecast at all with less than 5 checks over 14 days. On held-out simulated data it is well calibrated: **+0.227 Brier skill, 3% calibration error** ([results](docs/results/forecast-calibration.md)). The planner uses it when you're waiting for a better price. |
 | **Alternatives** | Mark items as alternatives (laptop A *or* B) and the planner buys at most one, the best fit. If buying a fallback now would rule out a preferred item that's waiting for a sale, the plan says so. With your Claude key, **Find current alternatives** runs a live web search and keeps only products found on the cited pages. |
@@ -138,9 +139,11 @@ Built in phases. Each phase ships tested and documented before the next begins.
 * Statement import reads CSV/TXT exports only, not PDF. Live bank linking (India's Account
   Aggregator framework) needs a licensed partner and is not built.
 
-* **Not every shop can be read.** Big marketplaces often block automated checks or build the price
-  with JavaScript. SpendWise then says it found no price, and you enter one yourself or record a
-  quote. It never scrapes visible text or guesses.
+* **Automatic price checks can't read every shop.** Big marketplaces such as Amazon and Flipkart
+  block automated checks, so the background checker reports "no price found" there. Use the
+  [browser extension](extension/README.md) instead: it reads the price from the page you have
+  open, and you confirm it. Prices on those sites are saved when you visit, not overnight.
+  SpendWise never gets around shops' bot protection.
 * The gold price is an international reference and reads lower than Indian retail rates, which add
   import duty and GST. The app says so, and the jewellery estimate uses your jeweller's quote.
 * Exchange rates are daily ECB reference rates, so they're not live market quotes. About 30

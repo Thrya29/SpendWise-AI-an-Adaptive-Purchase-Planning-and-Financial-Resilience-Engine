@@ -85,7 +85,7 @@ async def preview(fetcher: SafeFetcher, url: str) -> PreviewOut:
     )  # fmt: skip
 
 
-async def _latest(session: AsyncSession, item: PlannedItem) -> PriceObservation | None:
+async def latest(session: AsyncSession, item: PlannedItem) -> PriceObservation | None:
     return await session.scalar(
         select(PriceObservation)
         .where(PriceObservation.item_id == item.id)
@@ -152,7 +152,7 @@ async def check_item(
     if best is None or minor is None:
         return await _record_failure(session, item, _not_found_message(extraction))
 
-    previous = await _latest(session, item)
+    previous = await latest(session, item)
     obs = PriceObservation(
         user_id=user.id, item_id=item.id, amount_minor=minor, currency=best.currency,
         method=ObservationMethod(best.method.value), confidence=best.confidence,
@@ -169,7 +169,7 @@ async def check_item(
 
     applied = False
     if item.track_price and obs.currency == item.currency:
-        applied = await _apply(session, user, item, obs)
+        applied = await apply(session, user, item, obs)
     message = f"Found {format_amount(minor, best.currency)} at {obs.source_name}."
     if item.track_price and obs.currency != item.currency:
         message += f" Not applied: the item is priced in {item.currency}."
@@ -196,7 +196,7 @@ async def _record_failure(session: AsyncSession, item: PlannedItem, reason: str)
     )  # fmt: skip
 
 
-async def _apply(
+async def apply(
     session: AsyncSession, user: User, item: PlannedItem, obs: PriceObservation
 ) -> bool:
     if item.estimated_price_minor == obs.amount_minor and item.price_source is PriceSource.LINK:
@@ -225,7 +225,7 @@ async def record_quote(
     note: str | None,
     now: datetime | None = None,
 ) -> PriceObservation:
-    previous = await _latest(session, item)
+    previous = await latest(session, item)
     obs = PriceObservation(
         user_id=user.id, item_id=item.id, amount_minor=amount_minor, currency=item.currency,
         method=ObservationMethod.MANUAL, confidence="high", availability=Availability.UNKNOWN,
@@ -253,5 +253,5 @@ async def apply_observation(
             "This item changed elsewhere. Reload and try again.",
             extra={"current_version": item.version},
         )
-    await _apply(session, user, item, obs)
+    await apply(session, user, item, obs)
     return item

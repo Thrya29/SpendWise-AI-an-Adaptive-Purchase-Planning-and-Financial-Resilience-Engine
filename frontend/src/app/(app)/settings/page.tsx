@@ -17,8 +17,9 @@ import {
 } from "@/components/ui";
 import { api, ApiError, type Schemas } from "@/lib/api/client";
 import { useAuth, useUser, type User } from "@/lib/auth";
-import { countryOptions, timezoneOptions } from "@/lib/labels";
+import { countryOptions, formatDate, timezoneOptions } from "@/lib/labels";
 import { CURRENCIES, minorToInput, parseToMinor } from "@/lib/money";
+import { useResource } from "@/lib/use-resource";
 
 type Feedback = { tone: "success" | "danger"; text: string } | null;
 
@@ -242,6 +243,100 @@ function NotificationsCard({ user, onSaved }: { user: User; onSaved: (u: User) =
           disabled={busy || (!user.email_available && !user.email_notifications)}
           onChange={(e) => void toggle(e.target.checked)}
         />
+      </div>
+    </Card>
+  );
+}
+
+type ExtensionKey = Schemas["ExtensionTokenOut"];
+type NewExtensionKey = Schemas["ExtensionTokenCreated"];
+
+function ExtensionCard() {
+  const keys = useResource<ExtensionKey[]>("extension-keys", (signal) =>
+    api<ExtensionKey[]>("/me/extension-keys", { signal }),
+  );
+  const [created, setCreated] = useState<NewExtensionKey | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback>(null);
+
+  async function create() {
+    setBusy(true);
+    setFeedback(null);
+    try {
+      setCreated(
+        await api<NewExtensionKey>("/me/extension-keys", {
+          method: "POST",
+          body: { label: "Browser extension" },
+        }),
+      );
+      await keys.reload();
+    } catch (err) {
+      setFeedback({ tone: "danger", text: errorText(err, "Could not create a key.") });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function revoke(id: string) {
+    setFeedback(null);
+    try {
+      await api(`/me/extension-keys/${id}`, { method: "DELETE" });
+      if (created?.id === id) setCreated(null);
+      await keys.reload();
+      setFeedback({ tone: "success", text: "Key revoked. The extension using it stops working." });
+    } catch (err) {
+      setFeedback({ tone: "danger", text: errorText(err, "Could not revoke the key.") });
+    }
+  }
+
+  return (
+    <Card
+      title="Browser extension"
+      description="Save prices from Amazon, Flipkart and other shops while you browse. The extension's key can only list your items and save prices — nothing else."
+    >
+      <div className="flex flex-col gap-3">
+        {feedback && <Alert tone={feedback.tone}>{feedback.text}</Alert>}
+        {created && (
+          <Alert tone="success" title="Copy this key into the extension now">
+            <code className="mt-1 block break-all rounded bg-surface px-2 py-1 text-xs">
+              {created.token}
+            </code>
+            <span className="mt-1 block text-xs">
+              It is shown only once. If you lose it, revoke it and create a new one.
+            </span>
+          </Alert>
+        )}
+        {(keys.data ?? []).length > 0 && (
+          <ul className="divide-y divide-border text-sm">
+            {(keys.data ?? []).map((k) => (
+              <li key={k.id} className="flex flex-wrap items-center gap-2 py-2">
+                <span className="font-medium">{k.label}</span>
+                <span className="text-muted">…{k.hint}</span>
+                <span className="text-xs text-muted">
+                  {k.last_used_at ? `used ${formatDate(k.last_used_at)}` : "not used yet"}
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="ml-auto text-danger"
+                  onClick={() => void revoke(k.id)}
+                >
+                  Revoke
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div>
+          <Button variant="secondary" loading={busy} onClick={() => void create()}>
+            Create a key
+          </Button>
+        </div>
+        <p className="text-xs text-muted">
+          Install the extension from the <code>extension</code> folder of the SpendWise source
+          (Chrome or Edge → Extensions → Developer mode → Load unpacked), then paste the key and
+          this site&apos;s address into its options.
+        </p>
       </div>
     </Card>
   );
@@ -596,6 +691,7 @@ export default function SettingsPage() {
           <ReserveCard user={user} onSaved={setUser} />
           <NotificationsCard user={user} onSaved={setUser} />
           <ResearchCard user={user} onSaved={setUser} />
+          <ExtensionCard />
           <AssistantCard user={user} onSaved={setUser} />
           <DataCard />
         </div>

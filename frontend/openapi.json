@@ -461,6 +461,124 @@
         "title": "Availability",
         "type": "string"
       },
+      "CaptureIn": {
+        "additionalProperties": false,
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/Availability",
+            "default": "unknown"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Save the price to this item...",
+            "title": "Item Id"
+          },
+          "new_item": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NewItemIn"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "...or create a new item"
+          },
+          "page_title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Title"
+          },
+          "price_minor": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000000000000000.0,
+            "title": "Price Minor",
+            "type": "integer"
+          },
+          "url": {
+            "format": "uri",
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          },
+          "use_price": {
+            "default": true,
+            "description": "Also make it the item's planning price",
+            "title": "Use Price",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "url",
+          "price_minor",
+          "currency"
+        ],
+        "title": "CaptureIn",
+        "type": "object"
+      },
+      "CaptureOut": {
+        "additionalProperties": false,
+        "properties": {
+          "alerts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
+          "created_item": {
+            "title": "Created Item",
+            "type": "boolean"
+          },
+          "item_id": {
+            "format": "uuid",
+            "title": "Item Id",
+            "type": "string"
+          },
+          "item_name": {
+            "title": "Item Name",
+            "type": "string"
+          },
+          "observation_id": {
+            "format": "uuid",
+            "title": "Observation Id",
+            "type": "string"
+          },
+          "price_applied": {
+            "title": "Price Applied",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "item_id",
+          "item_name",
+          "observation_id",
+          "created_item",
+          "price_applied",
+          "alerts"
+        ],
+        "title": "CaptureOut",
+        "type": "object"
+      },
       "CashEventOut": {
         "additionalProperties": false,
         "properties": {
@@ -1226,6 +1344,160 @@
         ],
         "title": "EventKind",
         "type": "string"
+      },
+      "ExtensionItemOut": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "estimated_price_minor": {
+            "title": "Estimated Price Minor",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/Tier"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "tier",
+          "estimated_price_minor",
+          "currency",
+          "url"
+        ],
+        "title": "ExtensionItemOut",
+        "type": "object"
+      },
+      "ExtensionTokenCreated": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "hint": {
+            "title": "Hint",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "token": {
+            "description": "Shown once. Paste it into the extension; it is not stored.",
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "hint",
+          "created_at",
+          "last_used_at",
+          "token"
+        ],
+        "title": "ExtensionTokenCreated",
+        "type": "object"
+      },
+      "ExtensionTokenIn": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "default": "Browser extension",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "title": "ExtensionTokenIn",
+        "type": "object"
+      },
+      "ExtensionTokenOut": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "hint": {
+            "title": "Hint",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "hint",
+          "created_at",
+          "last_used_at"
+        ],
+        "title": "ExtensionTokenOut",
+        "type": "object"
       },
       "FeedbackKind": {
         "enum": [
@@ -2587,6 +2859,37 @@
         "title": "NewAccountIn",
         "type": "object"
       },
+      "NewItemIn": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/ItemKind",
+            "default": "product"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "priority": {
+            "default": 3,
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/Tier",
+            "default": "want"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "NewItemIn",
+        "type": "object"
+      },
       "ObligationCreate": {
         "additionalProperties": false,
         "properties": {
@@ -2834,7 +3137,8 @@
           "json_ld",
           "microdata",
           "opengraph",
-          "manual"
+          "manual",
+          "browser"
         ],
         "title": "ObservationMethod",
         "type": "string"
@@ -6504,6 +6808,120 @@
         ]
       }
     },
+    "/api/v1/extension/capture": {
+      "post": {
+        "description": "Save a price the user saw on a product page and confirmed.",
+        "operationId": "capture_api_v1_extension_capture_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaptureIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaptureOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Capture",
+        "tags": [
+          "browser extension"
+        ]
+      }
+    },
+    "/api/v1/extension/items": {
+      "get": {
+        "description": "Items still being planned, to attach a price to.",
+        "operationId": "list_items_api_v1_extension_items_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExtensionItemOut"
+                  },
+                  "title": "Response List Items Api V1 Extension Items Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Items",
+        "tags": [
+          "browser extension"
+        ]
+      }
+    },
     "/api/v1/feedback": {
       "post": {
         "operationId": "send_feedback_api_v1_feedback_post",
@@ -8473,6 +8891,122 @@
         "summary": "Export My Data",
         "tags": [
           "profile"
+        ]
+      }
+    },
+    "/api/v1/me/extension-keys": {
+      "get": {
+        "operationId": "list_keys_api_v1_me_extension_keys_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExtensionTokenOut"
+                  },
+                  "title": "Response List Keys Api V1 Me Extension Keys Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Keys",
+        "tags": [
+          "browser extension"
+        ]
+      },
+      "post": {
+        "operationId": "create_key_api_v1_me_extension_keys_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtensionTokenIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtensionTokenCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Key",
+        "tags": [
+          "browser extension"
+        ]
+      }
+    },
+    "/api/v1/me/extension-keys/{key_id}": {
+      "delete": {
+        "description": "Revoke a key immediately; the extension stops working until a new key is entered.",
+        "operationId": "revoke_key_api_v1_me_extension_keys__key_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Key Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Revoke Key",
+        "tags": [
+          "browser extension"
         ]
       }
     },

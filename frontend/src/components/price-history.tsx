@@ -28,6 +28,7 @@ const METHOD_LABEL: Record<Observation["method"], string> = {
   microdata: "Product page data",
   opengraph: "Page summary tags",
   manual: "Quote you recorded",
+  browser: "Saved from your browser",
 };
 
 function ChartTip({

@@ -214,6 +214,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/extension/capture": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Capture
+         * @description Save a price the user saw on a product page and confirmed.
+         */
+        post: operations["capture_api_v1_extension_capture_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/extension/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Items
+         * @description Items still being planned, to attach a price to.
+         */
+        get: operations["list_items_api_v1_extension_items_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/feedback": {
         parameters: {
             query?: never;
@@ -774,6 +814,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/extension-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Keys */
+        get: operations["list_keys_api_v1_me_extension_keys_get"];
+        put?: never;
+        /** Create Key */
+        post: operations["create_key_api_v1_me_extension_keys_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/extension-keys/{key_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke Key
+         * @description Revoke a key immediately; the extension stops working until a new key is entered.
+         */
+        delete: operations["revoke_key_api_v1_me_extension_keys__key_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/llm": {
         parameters: {
             query?: never;
@@ -1167,6 +1245,56 @@ export interface components {
          * @enum {string}
          */
         Availability: "in_stock" | "out_of_stock" | "preorder" | "unknown";
+        /** CaptureIn */
+        CaptureIn: {
+            /** @default unknown */
+            availability: components["schemas"]["Availability"];
+            /** Currency */
+            currency: string;
+            /**
+             * Item Id
+             * @description Save the price to this item...
+             */
+            item_id?: string | null;
+            /** @description ...or create a new item */
+            new_item?: components["schemas"]["NewItemIn"] | null;
+            /** Page Title */
+            page_title?: string | null;
+            /** Price Minor */
+            price_minor: number;
+            /**
+             * Url
+             * Format: uri
+             */
+            url: string;
+            /**
+             * Use Price
+             * @description Also make it the item's planning price
+             * @default true
+             */
+            use_price: boolean;
+        };
+        /** CaptureOut */
+        CaptureOut: {
+            /** Alerts */
+            alerts: string[];
+            /** Created Item */
+            created_item: boolean;
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Item Name */
+            item_name: string;
+            /**
+             * Observation Id
+             * Format: uuid
+             */
+            observation_id: string;
+            /** Price Applied */
+            price_applied: boolean;
+        };
         /** CashEventOut */
         CashEventOut: {
             /** Amount Minor */
@@ -1386,6 +1514,74 @@ export interface components {
          * @enum {string}
          */
         EventKind: "income" | "obligation" | "planned" | "emergency";
+        /** ExtensionItemOut */
+        ExtensionItemOut: {
+            /** Currency */
+            currency: string;
+            /** Estimated Price Minor */
+            estimated_price_minor: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            tier: components["schemas"]["Tier"];
+            /** Url */
+            url: string | null;
+        };
+        /** ExtensionTokenCreated */
+        ExtensionTokenCreated: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Hint */
+            hint: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /**
+             * Token
+             * @description Shown once. Paste it into the extension; it is not stored.
+             */
+            token: string;
+        };
+        /** ExtensionTokenIn */
+        ExtensionTokenIn: {
+            /**
+             * Label
+             * @default Browser extension
+             */
+            label: string;
+        };
+        /** ExtensionTokenOut */
+        ExtensionTokenOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Hint */
+            hint: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Last Used At */
+            last_used_at: string | null;
+        };
         /**
          * FeedbackKind
          * @enum {string}
@@ -1802,6 +1998,20 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** NewItemIn */
+        NewItemIn: {
+            /** @default product */
+            kind: components["schemas"]["ItemKind"];
+            /** Name */
+            name: string;
+            /**
+             * Priority
+             * @default 3
+             */
+            priority: number;
+            /** @default want */
+            tier: components["schemas"]["Tier"];
+        };
         /** ObligationCreate */
         ObligationCreate: {
             /** Amount Minor */
@@ -1893,7 +2103,7 @@ export interface components {
          * ObservationMethod
          * @enum {string}
          */
-        ObservationMethod: "json_ld" | "microdata" | "opengraph" | "manual";
+        ObservationMethod: "json_ld" | "microdata" | "opengraph" | "manual" | "browser";
         /** ObservationOut */
         ObservationOut: {
             /** Amount Minor */
@@ -3377,6 +3587,72 @@ export interface operations {
             };
         };
     };
+    capture_api_v1_extension_capture_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaptureIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaptureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_items_api_v1_extension_items_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtensionItemOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     send_feedback_api_v1_feedback_post: {
         parameters: {
             query?: never;
@@ -4609,6 +4885,88 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    list_keys_api_v1_me_extension_keys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtensionTokenOut"][];
+                };
+            };
+        };
+    };
+    create_key_api_v1_me_extension_keys_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExtensionTokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtensionTokenCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_key_api_v1_me_extension_keys__key_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

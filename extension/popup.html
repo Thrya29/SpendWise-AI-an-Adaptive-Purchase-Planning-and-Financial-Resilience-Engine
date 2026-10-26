@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Save to SpendWise</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Spend<span>Wise</span></h1>
+
+      <div id="setup" class="box" hidden>
+        Connect the extension first: <a href="options.html" target="_blank">open options</a>.
+      </div>
+
+      <form id="form" hidden>
+        <p id="source" class="note"></p>
+        <label>Product <input id="title" maxlength="200" required /></label>
+        <div class="row">
+          <label>Price <input id="price" inputmode="decimal" required /></label>
+          <label class="narrow"
+            >Currency
+            <select id="currency"></select
+          ></label>
+        </div>
+
+        <div class="choice" role="radiogroup" aria-label="Save to">
+          <label><input type="radio" name="target" value="new" checked /> New item</label>
+          <label><input type="radio" name="target" value="existing" /> Existing item</label>
+        </div>
+
+        <div id="new-fields" class="row">
+          <label
+            >Type
+            <select id="tier">
+              <option value="need">Need</option>
+              <option value="want" selected>Want</option>
+              <option value="desire">Desire</option>
+            </select>
+          </label>
+          <label
+            >Priority
+            <select id="priority">
+              <option value="5">5 · highest</option>
+              <option value="4">4</option>
+              <option value="3" selected>3</option>
+              <option value="2">2</option>
+              <option value="1">1 · lowest</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="existing-fields" hidden>
+          <label
+            >Item
+            <select id="item"></select
+          ></label>
+          <label class="check"
+            ><input type="checkbox" id="use-price" checked /> Use as the planning price</label
+          >
+        </div>
+
+        <button id="save" type="submit">Save to SpendWise</button>
+        <p id="status" class="note" role="status" aria-live="polite"></p>
+      </form>
+    </main>
+    <script src="common.js"></script>
+    <script src="extract.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

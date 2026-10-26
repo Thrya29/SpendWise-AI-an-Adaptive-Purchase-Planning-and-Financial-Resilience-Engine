@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SpendWise extension options</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body class="page">
+    <main>
+      <h1>Connect to Spend<span>Wise</span></h1>
+      <p class="note">
+        In SpendWise, open <strong>Settings → Browser extension → Create a key</strong>, then paste
+        the key and your SpendWise address here. The key can only list your items and save prices.
+      </p>
+      <form id="form">
+        <label
+          >SpendWise address <input id="server" placeholder="https://money.example.org" required
+        /></label>
+        <label
+          >Extension key <input id="key" placeholder="swx_…" autocomplete="off" required
+        /></label>
+        <button type="submit">Save and test</button>
+        <p id="status" class="note" role="status" aria-live="polite"></p>
+      </form>
+      <p class="note">
+        The extension reads a page only when you click its button, and only that tab. After you
+        confirm, it sends the product's name, link and price to your SpendWise address and nowhere
+        else.
+      </p>
+    </main>
+    <script src="common.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

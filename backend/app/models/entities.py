@@ -298,6 +298,7 @@ class ObservationMethod(StrEnum):
     MICRODATA = "microdata"
     OPENGRAPH = "opengraph"
     MANUAL = "manual"
+    BROWSER = "browser"  # read in the user's own browser by the extension, then confirmed
 
 
 class Availability(StrEnum):
@@ -481,3 +482,20 @@ class UsageEvent(IdMixin, Base):
     event: Mapped[str] = mapped_column(String(40), nullable=False)
     day: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     value: Mapped[int | None] = mapped_column(Integer)
+
+
+class ExtensionToken(IdMixin, Owned, Base):
+    """A key for the browser extension. It can only list items and save prices.
+
+    Only a SHA-256 digest is stored; the key itself is shown once, when it is created.
+    """
+
+    __tablename__ = "extension_tokens"
+
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    hint: Mapped[str] = mapped_column(String(8), nullable=False)  # last characters, for display
+    label: Mapped[str] = mapped_column(String(60), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
