@@ -56,7 +56,12 @@ export function QuickAdd({ onDraft }: { onDraft: (draft: Draft) => void }) {
           maxLength={500}
           autoComplete="off"
         />
-        <Button type="submit" loading={busy} disabled={text.trim().length < 2}>
+        <Button
+          type="submit"
+          loading={busy}
+          disabled={text.trim().length < 2}
+          className="shrink-0 whitespace-nowrap"
+        >
           Fill in for me
         </Button>
       </div>

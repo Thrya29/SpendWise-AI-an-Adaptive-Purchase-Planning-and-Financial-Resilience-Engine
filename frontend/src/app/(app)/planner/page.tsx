@@ -213,6 +213,9 @@ export default function PlannerPage() {
   const toggleOnTime = (id: string) => setOnTime((prev) => flip(prev, id));
   const changeCount = new Set([...selected, ...onTime]).size;
 
+  const anythingToApply = Boolean(
+    plan?.decisions.some((d) => hasChanges(d) || d.alternative_changes || d.on_time_pay_on),
+  );
   const nameOf = (id: string) => plan?.decisions.find((x) => x.item_id === id)?.name;
   const selectable = plan?.status === "draft" && !plan.stale;
   const reserveSelected = plan?.decisions.some(
@@ -436,7 +439,14 @@ export default function PlannerPage() {
                 })
               )}
 
-              {selectable && plan.decisions.length > 0 && (
+              {selectable && plan.decisions.length > 0 && !anythingToApply && (
+                <Alert tone="success" title="Nothing to change">
+                  Your items already match this plan. Run it again whenever your money or items
+                  change.
+                </Alert>
+              )}
+
+              {selectable && anythingToApply && (
                 <div className="sticky bottom-4 flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 shadow-lg sm:flex-row sm:items-center">
                   {reserveSelected && (
                     <Checkbox

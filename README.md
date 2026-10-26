@@ -9,6 +9,50 @@ emergency reserve, and what happens if your **salary is delayed** or an **emerge
 
 > SpendWise provides planning tools and educational information, not regulated financial advice.
 
+![SpendWise in action: import a bank statement, add needs and wants, test a salary delay, run the planner, save a price with the browser extension, and explore savings](docs/media/spendwise-demo.gif)
+
+**▶ [Watch the full walkthrough](docs/media/spendwise-walkthrough.mp4)** (4 min, every screen) ·
+**📖 [User manual](docs/USER_MANUAL.md)** (step by step, with pictures) ·
+**🧩 [Browser extension](extension/README.md)**
+
+<sub>Recorded from the real app running locally with made-up demo data. The shop page in the
+extension part is a sample page made for the recording.</sub>
+
+---
+
+## Start here (first time)
+
+You need a computer with **Docker Desktop** (free). Then:
+
+1. **Install Docker Desktop** from <https://www.docker.com/products/docker-desktop/>, open it and
+   wait for *Engine running*.
+2. **Download SpendWise:** green **Code** button on this page → **Download ZIP** → extract it.
+3. **Open a terminal in that folder** (Windows: click the folder's address bar, type
+   `powershell`, press Enter).
+4. **Type these two commands:**
+
+   ```bash
+   python scripts/generate_env.py
+   docker compose up --build -d
+   ```
+
+5. **Open <http://localhost:3000>**, click **Create account**, and follow the four steps on the
+   dashboard. The quickest start is **Import** → choose a CSV statement from your net banking.
+
+Every click is explained, with pictures, in the **[user manual](docs/USER_MANUAL.md)**, including
+what to do if something doesn't work.
+
+## Every week (5 minutes)
+
+* **Dashboard:** a yellow or red banner means something is at risk, and says when.
+* **Alerts 🔔:** bills you can't cover in the next 3 days, purchases due today, "did your salary
+  arrive?", and price drops.
+* **Bought something?** Click **Mark purchased** on the item.
+* **Saw a price?** Save it with the browser extension, or record a shop's quote under **Prices**.
+* **Life changed** (salary late, emergency, new need)? Run the **Planner** again and apply the
+  changes you agree with.
+* **Monthly:** update your balance on **Money** and answer the three-question check-in.
+
 ---
 
 ## What works today
@@ -60,9 +104,9 @@ Browser ──► Next.js (UI + same-origin /api proxy) ──► FastAPI ──
 Full design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Planner: [ADR 0005](docs/adr/0005-robust-purchase-scheduling.md) · Market data: [ADR 0006](docs/adr/0006-market-data-provenance.md) · Forecasting: [ADR 0007](docs/adr/0007-price-drop-forecasting.md) · Savings & investing: [ADR 0008](docs/adr/0008-savings-and-investment-education.md) · Benchmark: [ADR 0009](docs/adr/0009-planner-benchmark.md) · Statement import: [ADR 0010](docs/adr/0010-statement-import.md) · Operations: [ADR 0011](docs/adr/0011-production-operations.md) · Decisions: [docs/adr/](docs/adr/) ·
 Security: [docs/SECURITY.md](docs/SECURITY.md)
 
-## Run it
+## Run it (for developers)
 
-Requires Docker with Compose v2.
+Requires Docker with Compose v2. New to this? Use [Start here](#start-here-first-time) instead.
 
 ```bash
 python scripts/generate_env.py      # creates .env with fresh random secrets (never committed)

@@ -75,3 +75,23 @@ docker compose logs -f api
 * Every user-owned query goes through `OwnedRepository`.
 * `domain/` must stay free of I/O and framework imports.
 * Backend tests treat warnings as errors.
+
+## Re-recording the walkthrough, GIF and manual screenshots
+
+The video, the README GIF and every picture in the user manual come from the real app, driven by
+`e2e/demo/record.spec.ts` (Playwright) against a local SpendWise with made-up demo data.
+
+```bash
+# 1. A throwaway database and the demo data (backend/, with its virtualenv)
+export SPENDWISE_DATABASE_URL=sqlite+aiosqlite:///./demo.db
+alembic upgrade head
+python scripts/demo_seed.py reference          # real ECB, AMFI and gold reference data
+uvicorn app.main:app --port 8000 &             # then, in frontend/: npm run build && npm start
+python scripts/demo_seed.py everyday           # "Asha Rao", a lived-in demo account
+
+# 2. Record (e2e/). Writes videos to test-results/demo-videos and pictures to docs/manual/img
+npx playwright test --config demo/playwright.demo.config.ts
+
+# 3. Build the MP4 and the GIF with ffmpeg (commands in docs/media/README.md)
+```
+

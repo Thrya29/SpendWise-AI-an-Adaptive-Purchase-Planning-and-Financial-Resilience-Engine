@@ -35,7 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-border bg-surface/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2 sm:h-14 sm:flex-nowrap sm:py-0">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 sm:h-14 sm:flex-nowrap sm:py-0">
           <Link
             href="/dashboard"
             className="mr-auto shrink-0 text-lg font-semibold tracking-tight sm:mr-0"
@@ -54,7 +54,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cx(
-                    "whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                    "whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
                     active
                       ? "bg-brand-soft text-brand"
                       : "text-muted hover:bg-surface-muted hover:text-text",
@@ -70,7 +70,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           <AlertsBell />
           <div className="hidden items-center gap-3 sm:flex">
-            <span className="max-w-40 truncate text-sm text-muted" title={user.email}>
+            <span
+              className="hidden max-w-40 truncate text-sm text-muted 2xl:inline"
+              title={user.email}
+            >
               {user.display_name}
             </span>
             <Button variant="ghost" size="sm" onClick={() => void logout()}>
