@@ -1,0 +1,14 @@
+# HTTPS in front of the web container. Caddy obtains and renews certificates automatically.
+# Used by docker-compose.https.yml; set DOMAIN in .env (the DNS A/AAAA record must point here).
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy web:3000 {
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

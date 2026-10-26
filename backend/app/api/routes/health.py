@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
+from app.core import ratelimit
 from app.core.db import get_engine
 
 router = APIRouter(tags=["health"])
@@ -19,6 +20,13 @@ async def readiness() -> JSONResponse:
     try:
         async with get_engine().connect() as conn:
             await conn.execute(text("SELECT 1"))
+        database = "up"
     except Exception:
-        return JSONResponse({"status": "unavailable", "database": "down"}, status_code=503)
-    return JSONResponse({"status": "ok", "database": "up"})
+        database = "down"
+    redis_ok = await ratelimit.ping()
+    redis = "not_configured" if redis_ok is None else "up" if redis_ok else "down"
+    ok = database == "up" and redis != "down"
+    return JSONResponse(
+        {"status": "ok" if ok else "unavailable", "database": database, "redis": redis},
+        status_code=200 if ok else 503,
+    )

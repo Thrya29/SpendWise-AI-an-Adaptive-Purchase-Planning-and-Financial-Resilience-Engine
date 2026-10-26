@@ -35,11 +35,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-border bg-surface/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
-          <Link href="/dashboard" className="shrink-0 text-lg font-semibold tracking-tight">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2 sm:h-14 sm:flex-nowrap sm:py-0">
+          <Link
+            href="/dashboard"
+            className="mr-auto shrink-0 text-lg font-semibold tracking-tight sm:mr-0"
+          >
             Spend<span className="text-brand">Wise</span>
           </Link>
-          <nav aria-label="Main" className="-mx-2 flex flex-1 gap-1 overflow-x-auto">
+          <nav
+            aria-label="Main"
+            className="order-last -mx-2 flex w-full gap-1 overflow-x-auto [mask-image:linear-gradient(to_right,black_85%,transparent)] sm:order-none sm:w-auto sm:flex-1 sm:[mask-image:none]"
+          >
             {NAV.map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (

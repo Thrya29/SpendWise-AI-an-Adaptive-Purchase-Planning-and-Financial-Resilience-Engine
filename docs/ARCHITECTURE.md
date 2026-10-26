@@ -287,7 +287,31 @@ after an hour.
 * `python -m app.pilot_report` prints setup progress, weekly active users, 4th-or-5th-week
   retention, check-in outcomes per month and the latest comments. See [PILOT.md](PILOT.md).
 
-## 18. What comes next
+## 18. Operations
 
-Phase 7 hardens production: metrics and tracing, load tests of the planner and API, backup and
-restore, and a deployment guide.
+[ADR 0011](adr/0011-production-operations.md) and the [deployment guide](DEPLOYMENT.md).
+
+* `BodySizeLimitMiddleware` (pure ASGI) returns 413 above 1 MB, or 3.5 MB for
+  `/imports/statement/preview`. Declared lengths are checked up front; undeclared bodies are
+  buffered up to the limit first.
+* `/readyz` checks PostgreSQL and, when configured, Redis. Requests over 1 s log `slow_request`.
+* The worker writes a heartbeat after every cycle (the Compose health check reads its age),
+  paces reminders to every 5 minutes, and only opens a session for users with something due.
+* The planner models one running total of spending per pay day (exactly equivalent to the
+  per-record-day constraints and linear in items x periods), starts CP-SAT from a greedy safe
+  plan, and turns a time-out without a solution into an empty, explained plan (`timeout`).
+  See [planner scaling](results/planner-scaling.md).
+* CI's `stack` job runs Compose, the Playwright phone test (`e2e/`), `backend/scripts/loadtest.py`,
+  and `scripts/backup.sh` / `scripts/restore.sh --into`.
+
+## 19. What comes next
+
+All seven phases are complete. Candidates for the next round, best decided with
+pilot results ([PILOT.md](PILOT.md)):
+
+* Hindi and other Indian languages. This needs translations of all UI text, reviewed by
+  native speakers for financial terms.
+* A nonce-based Content-Security-Policy, so inline scripts no longer need `'unsafe-inline'`.
+* Live bank data through the RBI Account Aggregator framework, which requires a licensed partner.
+* PDF statement import for banks that don't offer CSV.
+* Repeating the planner benchmark on real (consented, pseudonymous) cash flows.

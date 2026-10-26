@@ -303,9 +303,16 @@ class MockAssistant:
                 "a safety buffer in Settings, so plans protect money for emergencies."
             )
         elif safe:
+            if len(safe) == 1:
+                where = f"in the scenario checked ({safe[0]})"
+            else:
+                count = "both" if len(safe) == 2 else f"all {len(safe)}"
+                where = f"in {count} scenarios checked ({_join(safe)})"
+            buying = facts.buy_now or facts.scheduled or facts.using_reserve
+            subject = "Every scheduled purchase keeps your" if buying else "Your"
+            verb = "" if buying else " stays"
             parts.append(
-                f"Every scheduled purchase keeps your {facts.reserve} reserve intact in "
-                f"{_join(safe)}"
+                f"{subject} {facts.reserve} reserve{verb} intact {where}"
                 + (", except where you approve using it." if facts.using_reserve else ".")
             )
         return " ".join(parts)

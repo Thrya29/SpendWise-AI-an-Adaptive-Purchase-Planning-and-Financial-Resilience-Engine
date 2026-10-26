@@ -17,7 +17,7 @@ buffer. No public dataset joins wish lists with daily cash flow, so the test is 
 * Development used seed 7. The report uses seed 2026, run once the code was final. Nothing in the
   planner was changed to suit the benchmark.
 * The default protection stays as it is (one-month salary delay, re-applied at every replan),
-  although the benchmark shows it costs hard deadlines: 32.9% on time against 67.4% with the
+  although the benchmark shows it costs hard deadlines: 32.9% on time against 67.6% with the
   reserve alone, for 3.8% against 9.0% avoidable overdrafts. A `deadline-first` variant (pay a
   hard need on time if the expected case stays solvent) reached 67.8% at 7.3%. It is kept as an
   ablation, not shipped, because it would sometimes knowingly risk rent for a deadline without the

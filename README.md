@@ -56,7 +56,7 @@ Browser ──► Next.js (UI + same-origin /api proxy) ──► FastAPI ──
 * **Typed contract.** The frontend's TypeScript types are generated from the API's OpenAPI schema,
   and CI fails if they drift.
 
-Full design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Planner: [ADR 0005](docs/adr/0005-robust-purchase-scheduling.md) · Market data: [ADR 0006](docs/adr/0006-market-data-provenance.md) · Forecasting: [ADR 0007](docs/adr/0007-price-drop-forecasting.md) · Savings & investing: [ADR 0008](docs/adr/0008-savings-and-investment-education.md) · Benchmark: [ADR 0009](docs/adr/0009-planner-benchmark.md) · Decisions: [docs/adr/](docs/adr/) ·
+Full design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Planner: [ADR 0005](docs/adr/0005-robust-purchase-scheduling.md) · Market data: [ADR 0006](docs/adr/0006-market-data-provenance.md) · Forecasting: [ADR 0007](docs/adr/0007-price-drop-forecasting.md) · Savings & investing: [ADR 0008](docs/adr/0008-savings-and-investment-education.md) · Benchmark: [ADR 0009](docs/adr/0009-planner-benchmark.md) · Statement import: [ADR 0010](docs/adr/0010-statement-import.md) · Operations: [ADR 0011](docs/adr/0011-production-operations.md) · Decisions: [docs/adr/](docs/adr/) ·
 Security: [docs/SECURITY.md](docs/SECURITY.md)
 
 ## Run it
@@ -72,6 +72,8 @@ docker compose up --build -d
 Only the web app is published, and only on `127.0.0.1`. The API, database and Redis stay on
 private Docker networks. Migrations run automatically when the API starts.
 
+**Public deployment with HTTPS, backups, updates and monitoring:**
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Running a pilot with real users: [docs/PILOT.md](docs/PILOT.md).
 Local development without Docker: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Quality gates
@@ -85,7 +87,15 @@ Every push runs in CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
 | Property-based tests (Hypothesis): money invariants, and *no plan ever breaks the reserve* | Production `next build` |
 | Coverage gate ≥ 85% (currently ~96%) · forecast calibration and planner benchmark regression tests | Generated API types must match the schema |
 | Migration ↔ model drift check + up/down round-trip | `npm audit` on production deps |
-| `pip-audit` on the locked runtime deps | Docker images must build |
+| `pip-audit` on the locked runtime deps | ShellCheck on the ops scripts |
+
+The **full stack** job then builds the images and starts every service with Docker Compose,
+waiting for health checks. Against that stack it:
+
+* runs a Playwright test on a phone-sized browser: sign up, import a statement, run the planner,
+  with no console or CSP errors, no 5xx and no horizontal scroll;
+* load tests through the web proxy for 45 seconds, failing on any 5xx;
+* backs up the database, restores it into a separate database and compares the two.
 
 Warnings are treated as errors in the backend test suite.
 
@@ -111,7 +121,7 @@ Built in phases. Each phase ships tested and documented before the next begins.
 | 4 | Calibrated price-drop forecasting (measured on held-out data), alternatives groups in the planner, verified web search for current alternatives | ✅ Done |
 | 5 | Savings & investment education: safe-to-lock amount, FD vs. savings, Monte Carlo SIP simulator, AMFI NAVs with fund history, gold reference and jewellery bill (sourced and timestamped; no advice) | ✅ Done |
 | 6 | Research benchmark: planner vs. impulse, 50/30/20 and keep-a-buffer rules on 500 simulated households under salary delays, losses and emergencies, with an ablation of the default protection | ✅ Done |
-| 7 | Production hardening: observability, load tests, deployment guide | ⏳ Next |
+| 7 | Production hardening: request size limits in the API, CSP, readiness and worker heartbeat, a faster planner model (typical plan 2 s → 50 ms, [scaling](docs/results/planner-scaling.md)) that never fails on time-outs, HTTPS proxy, backup and restore, full-stack CI with phone e2e and load test, deployment guide | ✅ Done |
 
 ## Honest limits
 
@@ -121,6 +131,10 @@ Built in phases. Each phase ships tested and documented before the next begins.
   affordable only if salary arrives, the plan keeps the safe date but shows the on-time option
   with the exact shortfall it risks, and you can tick *Pay on time anyway* for that item.
 * The benchmark households are simulated: results describe the methods, not a real population.
+* The interface is in English only. Hindi and other languages need translations reviewed by
+  native speakers for financial terms, and aren't done yet.
+* One server, by design: a pilot or small community fits comfortably, but it is a single point of
+  failure. Recovery means restoring the latest off-server backup ([deployment guide](docs/DEPLOYMENT.md)).
 * Statement import reads CSV/TXT exports only, not PDF. Live bank linking (India's Account
   Aggregator framework) needs a licensed partner and is not built.
 

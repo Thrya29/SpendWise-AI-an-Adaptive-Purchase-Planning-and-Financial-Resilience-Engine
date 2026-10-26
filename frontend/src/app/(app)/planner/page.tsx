@@ -33,6 +33,12 @@ import {
 
 type ApplyResult = Schemas["ApplyResponse"];
 
+const SOLVER_LABEL: Record<string, string> = {
+  optimal: "Optimal",
+  feasible: "Best found",
+  timeout: "Out of time",
+};
+
 const HORIZONS = [3, 6, 12, 24].map((m) => ({ value: String(m), label: `${m} months` }));
 
 function DecisionRow({
@@ -341,8 +347,7 @@ export default function PlannerPage() {
                   <div className="rounded-lg bg-surface-muted p-3">
                     <dt className="text-xs text-muted">Solver</dt>
                     <dd className="font-semibold">
-                      {plan.solver.status === "optimal" ? "Optimal" : "Best found"} ·{" "}
-                      {plan.solver.solve_ms} ms
+                      {SOLVER_LABEL[plan.solver.status] ?? "Best found"} · {plan.solver.solve_ms} ms
                     </dd>
                   </div>
                 </dl>

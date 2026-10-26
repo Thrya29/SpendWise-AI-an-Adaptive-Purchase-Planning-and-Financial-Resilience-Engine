@@ -12,11 +12,13 @@ import logging
 import signal
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from uuid import UUID
 
 import httpx
 from sqlalchemy import func, or_, select
 
+from app.core import mailer
 from app.core.config import get_settings
 from app.core.db import dispose_engine, get_sessionmaker, utcnow
 from app.core.errors import ConflictError
@@ -163,11 +165,30 @@ async def refresh_reference_data_if_due(client: httpx.AsyncClient) -> list[str]:
     return done
 
 
+NOTIFY_EVERY = timedelta(minutes=5)
+_last_notify: datetime | None = None
+
+
+def _needs_attention(user: User, now: datetime) -> bool:
+    """Cheap in-memory check, so per-user work only happens for users with something due."""
+    s = get_settings()
+    local = notification_service.local_now(user, now)
+    if local.hour < s.morning_hour:
+        return False
+    if user.money_checked_on != local.date():
+        return True
+    if not (user.email_notifications and mailer.mail_enabled()):
+        return False
+    last = user.last_digest_at
+    return last is None or _aware(last) <= now - timedelta(hours=s.digest_hours)
+
+
 async def notify_users(now: datetime | None = None) -> tuple[int, int]:
     """Daily money reminders and email digests. Returns (alerts created, emails sent)."""
     now = now or utcnow()
     async with get_sessionmaker()() as session:
-        user_ids = list(await session.scalars(select(User.id)))
+        users = list(await session.scalars(select(User)))
+        user_ids = [u.id for u in users if _needs_attention(u, now)]
     created = sent = 0
     for user_id in user_ids:
         async with get_sessionmaker()() as session:
@@ -184,11 +205,32 @@ async def notify_users(now: datetime | None = None) -> tuple[int, int]:
     return created, sent
 
 
+async def notify_if_due() -> tuple[int, int] | None:
+    global _last_notify  # noqa: PLW0603
+    now = utcnow()
+    if _last_notify is not None and now - _last_notify < NOTIFY_EVERY:
+        return None
+    _last_notify = now
+    return await notify_users(now)
+
+
+def heartbeat() -> None:
+    """Touch a file after every cycle, failed or not; the health check reads its age.
+
+    An outage at a data source is logged, not reported as an unhealthy worker. A stuck
+    loop stops touching the file.
+    """
+    path = Path(get_settings().worker_heartbeat_path)
+    with contextlib.suppress(OSError):
+        path.write_text(utcnow().isoformat(), encoding="utf-8")
+
+
 async def run_once(client: httpx.AsyncClient, fetcher: SafeFetcher) -> None:
     await refresh_fx_if_due(client)
     await refresh_reference_data_if_due(client)
     await check_due_prices(fetcher)
-    await notify_users()
+    if (notified := await notify_if_due()) and any(notified):
+        logger.info("notified", extra={"alerts": notified[0], "emails": notified[1]})
 
 
 async def main() -> None:
@@ -208,6 +250,7 @@ async def main() -> None:
                     await run_once(client, fetcher)
                 except Exception:
                     logger.exception("worker_cycle_failed")
+                heartbeat()  # the loop is alive; failures are in the logs
                 with contextlib.suppress(TimeoutError):
                     await asyncio.wait_for(stop.wait(), timeout=TICK_SECONDS)
         finally:

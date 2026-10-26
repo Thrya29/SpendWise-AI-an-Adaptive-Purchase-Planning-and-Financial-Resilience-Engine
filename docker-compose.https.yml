@@ -1,0 +1,24 @@
+# Public HTTPS deployment: docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
+# Requires DOMAIN in .env and ports 80 and 443 reachable from the internet.
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env to your public hostname}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web: { condition: service_healthy }
+    security_opt: ["no-new-privileges:true"]
+    networks: [frontend]
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 
@@ -268,3 +268,57 @@ def test_no_on_time_option_when_it_is_safe_or_impossible() -> None:
                target_date=date(2026, 10, 30))  # fmt: skip
     # Not solvent even as expected: nothing to offer.
     assert by_ref(run([big], scenarios=(BASE, DELAYED_2), months=3))["repair"].on_time is None
+
+
+def test_running_out_of_time_schedules_nothing_instead_of_failing(monkeypatch) -> None:
+    from ortools.sat.python import cp_model  # noqa: PLC0415
+
+    class NoAnswer(cp_model.CpSolver):
+        def solve(self, *_args, **_kw):  # type: ignore[override]
+            return cp_model.UNKNOWN
+
+    monkeypatch.setattr(cp_model, "CpSolver", NoAnswer)
+    laptop = item("laptop", 10_000, tier="need", priority=5)
+    r = run([laptop])
+    assert r.solver_status == "timeout" and r.objective == 0
+    assert r.decisions[0].action is Action.POSTPONE
+    assert any("ran out of time" in w for w in r.warnings)
+
+
+def test_a_tiny_time_limit_still_returns_a_safe_plan() -> None:
+    items = [item(f"i{n}", 5_000 + n * 700, priority=1 + n % 5) for n in range(40)]
+    r = run(items, scenarios=(BASE, DELAYED_2), time_limit_s=0.001)
+    assert r.solver_status in {"optimal", "feasible", "timeout"}
+    assert all(o.first_reserve_breach_on is None for o in r.outcomes if o.name == "As expected")
+
+
+def test_greedy_starting_plan_respects_every_reserve_cap() -> None:
+    import random  # noqa: PLC0415
+    from bisect import bisect_left  # noqa: PLC0415
+
+    from app.domain.planner import _Planner  # noqa: PLC0415
+
+    for seed in range(25):
+        rng = random.Random(seed)
+        items = [
+            item(f"i{n}", rng.randint(1_000, 40_000), tier=rng.choice(["need", "want", "desire"]),
+                 priority=rng.randint(1, 5), group=f"g{n % 4}" if n % 3 == 0 else None,
+                 target_date=date(2026, 11, 1) + timedelta(days=rng.randint(0, 150))
+                 if rng.random() < 0.6 else None)
+            for n in range(rng.randint(3, 25))
+        ]  # fmt: skip
+        planner = _Planner(
+            opening=inr(rng.randint(20_000, 200_000)), today=TODAY, horizon_months=6,
+            items=items, named=[BASE, DELAYED_2], incomes=[SALARY], obligations=[RENT],
+            reserve=ReservePolicy(months_of_essentials=2),
+        )  # fmt: skip
+        days, caps = planner._pay_days_and_caps()
+        plan = planner._greedy_plan(days, caps)
+        totals = [0] * len(days)
+        for ref, t in plan.items():
+            cost = next(it.cost for it in items if it.ref == ref)
+            for i in range(bisect_left(days, planner.pay[ref, t]), len(days)):
+                totals[i] += cost
+        assert all(cap is None or total <= cap for total, cap in zip(totals, caps, strict=True))
+        chosen_groups = [it.group for it in items if it.ref in plan and it.group]
+        assert len(chosen_groups) == len(set(chosen_groups))

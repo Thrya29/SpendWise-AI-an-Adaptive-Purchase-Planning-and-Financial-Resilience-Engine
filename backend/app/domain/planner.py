@@ -21,8 +21,11 @@ before inflows, as in the cash-flow engine) and ``R`` the reserve:
     Σ_{i,t : pay(i,t) ≤ k} cost_i · x[i,t]  ≤  max(low[s,k] - R, 0)
 
 Spending only accumulates, so the constraint is needed only on *record-low* days
-(lower than every later day); all others are implied. This keeps the model small
-while remaining exact at day granularity.
+(lower than every later day); all others are implied. Purchases are paid on a few distinct
+pay days, so the model keeps one running total per pay day, capped by the tightest record-low
+day before the next one. This is exact at day granularity and linear in items x periods.
+A greedy plan (most valuable first, each where it still fits) is the starting hint, so a
+time-limited solve still returns a good, safe plan.
 
 Objective: maximise ``Σ value[i,t] · x[i,t]``: value encodes tier and priority,
 and decays for buying late (soft or hard deadline) or needlessly early.
@@ -37,10 +40,12 @@ would run out of money and by how much. Choosing it is the user's call.
 from __future__ import annotations
 
 import time
+from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 from enum import StrEnum
+from itertools import accumulate
 
 from ortools.sat.python import cp_model
 
@@ -428,15 +433,23 @@ class _Planner:
         waiting_refs = {it.ref for it in self.waiting}
         self.candidates = [it for it in items if it.ref not in waiting_refs]
         self.chosen: dict[str, int] = {}
+        self._spent: list[int] | None = None  # cumulative spend by day; None = recompute
         self.reserve_users: dict[str, date | None] = {}  # ref -> later reserve-safe date
         self.on_time: dict[str, OnTimeOption] = {}
+        self.timed_out = False
 
     def warnings(self) -> list[str]:
-        return [
+        out = [
             f"In '{ns.name}', your balance falls below the reserve even with no purchases."
             for ns, lg in zip(self.named, self.ledgers, strict=True)
             if min(lg.lows) < self.reserve_required
         ]
+        if self.timed_out:
+            out.append(
+                "The planner ran out of time before it could schedule anything, so nothing is "
+                "scheduled. Try a shorter horizon, fewer items, or fewer scenarios."
+            )
+        return out
 
     def _groups(self) -> dict[str, list[PlanItem]]:
         groups: dict[str, list[PlanItem]] = {}
@@ -455,12 +468,21 @@ class _Planner:
             None,
         )  # fmt: skip
 
+    def _set_chosen(self, chosen: dict[str, int]) -> None:
+        self.chosen = chosen
+        self._spent = None
+
     def spent_by(self, day_index: int) -> int:
-        return sum(
-            it.cost
-            for it in self.candidates
-            if it.ref in self.chosen and self.pay[it.ref, self.chosen[it.ref]] <= day_index
-        )
+        """Total paid for chosen items on or before ``day_index`` (prefix sums, cached)."""
+        if self._spent is None:
+            cost = {it.ref: it.cost for it in self.candidates}
+            per_day = [0] * len(self.ledgers[0].lows)
+            for ref, t in self.chosen.items():
+                per_day[self.pay[ref, t]] += cost[ref]
+            self._spent = list(accumulate(per_day))
+        if day_index < 0:
+            return 0
+        return self._spent[min(day_index, len(self._spent) - 1)]
 
     # ---- Stage 1: CP-SAT, reserve protected in every scenario ----------------
     def solve_reserve_safe(self, time_limit_s: float) -> tuple[str, int]:
@@ -475,17 +497,8 @@ class _Planner:
         for members in self._groups().values():
             model.add_at_most_one(x[it.ref, p.index] for it in members for p in self.periods)
 
-        for lg in self.ledgers:
-            for k in lg.records:
-                paid = [
-                    it.cost * x[it.ref, p.index]
-                    for it in self.candidates
-                    if it.cost > 0
-                    for p in self.periods
-                    if self.pay[it.ref, p.index] <= k
-                ]
-                if paid:
-                    model.add(sum(paid) <= max(lg.lows[k] - self.reserve_required, 0))
+        start = self._greedy_plan(*self._pay_days_and_caps())
+        self._add_reserve_constraints(model, x, start)
 
         model.maximize(
             sum(
@@ -494,21 +507,118 @@ class _Planner:
                 for p in self.periods
             )
         )
+        # Start from a safe greedy plan, so a time-limited solve still returns a useful one.
+        for (ref, t), var in x.items():
+            model.add_hint(var, 1 if start.get(ref) == t else 0)
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = time_limit_s
         solver.parameters.num_workers = 1  # deterministic results for identical inputs
         solver.parameters.random_seed = 0
+        solver.parameters.linearization_level = 2  # LP relaxation: faster on these knapsacks
         status = solver.solve(model)
-        if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):  # pragma: no cover
-            raise RuntimeError(f"Planner failed: {solver.status_name(status)}")
-        self.chosen = {
+        if status == cp_model.INFEASIBLE:  # pragma: no cover - impossible: x = 0 is feasible
+            raise RuntimeError("Planner model is infeasible")
+        if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            self.timed_out = True  # out of time before any plan: schedule nothing, safely
+            self._set_chosen({})
+            return "timeout", 0
+        self._set_chosen({
             it.ref: p.index
             for it in self.candidates
             for p in self.periods
             if solver.value(x[it.ref, p.index])
-        }
+        })  # fmt: skip
         name = "optimal" if status == cp_model.OPTIMAL else "feasible"
-        return name, int(solver.objective_value)
+        return name, round(solver.objective_value)  # integer objective; avoid float truncation
+
+    def _pay_days_and_caps(self) -> tuple[list[int], list[int | None]]:
+        """Distinct pay days, and the most that may be spent in total by each of them.
+
+        Purchases happen only on a few distinct pay days, so cumulative spending is constant
+        between them. Bounding the running total at pay day j by the tightest record-low day
+        before pay day j+1 (low balance - reserve, in every scenario) is exactly equivalent to
+        one constraint per record day, and keeps the model linear in items x periods.
+        """
+        days = sorted(
+            {
+                self.pay[it.ref, p.index]
+                for it in self.candidates
+                if it.cost > 0
+                for p in self.periods
+            }
+        )
+        caps: list[int | None] = [None] * len(days)  # None: nothing binds while day j holds
+        for lg in self.ledgers:
+            for k in lg.records:
+                j = bisect_right(days, k) - 1
+                if j < 0:
+                    continue  # before any purchase can be paid
+                cap = max(lg.lows[k] - self.reserve_required, 0)
+                current = caps[j]
+                caps[j] = cap if current is None else min(current, cap)
+        return days, caps
+
+    def _greedy_plan(self, days: list[int], caps: list[int | None]) -> dict[str, int]:
+        """A safe starting plan: most valuable items first, each in its best period that fits.
+
+        Gives the solver a good incumbent, so even a time-limited solve returns a useful plan.
+        """
+        totals = [0] * len(days)
+        plan: dict[str, int] = {}
+        groups: set[str] = set()
+
+        def value(it: PlanItem, t: int) -> int:
+            return item_value(it, t, self.targets[it.ref])
+
+        order = sorted(
+            self.candidates, key=lambda it: (-max(value(it, p.index) for p in self.periods), it.ref)
+        )
+        for it in order:
+            if it.group is not None and it.group in groups:
+                continue
+            for p in sorted(self.periods, key=lambda p: (-value(it, p.index), p.index)):
+                j = bisect_left(days, self.pay[it.ref, p.index])
+                later = range(j, len(days)) if it.cost > 0 else range(0)
+                if all((cap := caps[i]) is None or totals[i] + it.cost <= cap for i in later):
+                    for i in later:
+                        totals[i] += it.cost
+                    plan[it.ref] = p.index
+                    if it.group is not None:
+                        groups.add(it.group)
+                    break
+        return plan
+
+    def _add_reserve_constraints(
+        self,
+        model: cp_model.CpModel,
+        x: dict[tuple[str, int], cp_model.IntVar],
+        start: dict[str, int],
+    ) -> None:
+        """Running total of spending per pay day, capped as in ``_pay_days_and_caps``."""
+        days, caps = self._pay_days_and_caps()
+        on_day: dict[int, list[cp_model.LinearExprT]] = {d: [] for d in days}
+        start_spend = dict.fromkeys(days, 0)
+        for it in self.candidates:
+            if it.cost <= 0:
+                continue
+            for p in self.periods:
+                day = self.pay[it.ref, p.index]
+                on_day[day].append(it.cost * x[it.ref, p.index])
+                if start.get(it.ref) == p.index:
+                    start_spend[day] += it.cost
+        total = sum(it.cost for it in self.candidates if it.cost > 0)
+        previous: cp_model.IntVar | None = None
+        hinted = 0
+        for j, day in enumerate(days):
+            cumulative = model.new_int_var(0, total, f"spent_{day}")
+            terms = [*on_day[day], *([previous] if previous is not None else [])]
+            model.add(cumulative == cp_model.LinearExpr.sum(terms))
+            limit = caps[j]
+            if limit is not None:
+                model.add(cumulative <= limit)
+            hinted += start_spend[day]
+            model.add_hint(cumulative, hinted)
+            previous = cumulative
 
     # ---- Stage 2: hard-deadline needs, on time, even if that uses the reserve ------
     def place_hard_needs_on_time(self) -> None:
@@ -537,15 +647,18 @@ class _Planner:
             q = min(self.targets[it.ref] or 0, len(self.periods) - 1)
             day = self.pay[it.ref, q]
             later = self.chosen.pop(it.ref, None)
+            self._spent = None
             gaps = [self._deepest_gap(lg, day, it.cost) for lg in self.ledgers]
             if all(g is None for g in gaps):
                 self.chosen[it.ref] = q
+                self._spent = None
                 self.reserve_users[it.ref] = (
                     self.ledgers[0].day(self.pay[it.ref, later]) if later is not None else None
                 )
                 continue
             if later is not None:
                 self.chosen[it.ref] = later  # on time is not solvent everywhere; keep safe date
+                self._spent = None
             if gaps[0] is None and not _is_late(it, self.ledgers[0].day(day)):
                 worst = max((g for g in gaps if g is not None), key=lambda g: g[0])
                 self.on_time[it.ref] = OnTimeOption(

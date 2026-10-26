@@ -83,11 +83,67 @@ jobs:
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high
 
-  docker:
-    name: Docker images build
+  stack:
+    name: Full stack (Docker Compose, e2e on a phone, backup and restore)
     runs-on: ubuntu-24.04
     needs: [backend, frontend]
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
-      - run: docker build -t spendwise-api ./backend
-      - run: docker build -t spendwise-web ./frontend
+      - name: Lint shell scripts
+        run: shellcheck scripts/*.sh
+      - name: Generate secrets
+        run: python3 scripts/generate_env.py
+      - name: Validate Compose files and the HTTPS proxy config
+        run: |
+          docker compose config --quiet
+          DOMAIN=spendwise.example docker compose -f docker-compose.yml -f docker-compose.https.yml config --quiet
+          docker run --rm -e DOMAIN=spendwise.example \
+            -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+      - name: Build and start every service (waits for health checks)
+        run: docker compose up --detach --build --wait --wait-timeout 420
+      - name: Readiness
+        run: |
+          docker compose exec -T api python -c "import json,urllib.request; r=json.load(urllib.request.urlopen('http://127.0.0.1:8000/readyz')); print(r); assert r == {'status': 'ok', 'database': 'up', 'redis': 'up'}"
+          docker compose ps
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - name: End-to-end test on a phone-sized browser
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npx playwright test
+      - name: Load test through the web proxy (fails on any 5xx)
+        run: |
+          pip install "httpx>=0.27"
+          python backend/scripts/loadtest.py --users 4 --concurrency 8 --seconds 45 | tee loadtest.txt
+          { echo '### Load test'; echo '```'; cat loadtest.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Backup, then restore into a separate database and compare
+        run: |
+          file=$(scripts/backup.sh /tmp/backups)
+          echo "backup: $file ($(stat -c %s "$file") bytes)"
+          scripts/restore.sh "$file" --into restore_check
+          count() { docker compose exec -T db sh -c "psql -tA -U \"\$POSTGRES_USER\" -d $1 -c 'select count(*) from users; select count(*) from income_streams; select version_num from alembic_version'"; }
+          live=$(count spendwise); restored=$(count restore_check)
+          echo "live: $live"; echo "restored: $restored"
+          test "$live" = "$restored"
+          test "$(echo "$live" | head -1)" -ge 1
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail 300
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
+      - name: Stop
+        if: always()
+        run: docker compose down --volumes

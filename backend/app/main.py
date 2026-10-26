@@ -22,7 +22,7 @@ from app.core.config import get_settings
 from app.core.db import dispose_engine
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
-from app.core.middleware import RequestContextMiddleware
+from app.core.middleware import BodySizeLimitMiddleware, RequestContextMiddleware
 
 API_PREFIX = "/api/v1"
 
@@ -49,6 +49,7 @@ def create_app() -> FastAPI:
         redoc_url=None,
     )
     app.add_middleware(RequestContextMiddleware)
+    app.add_middleware(BodySizeLimitMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

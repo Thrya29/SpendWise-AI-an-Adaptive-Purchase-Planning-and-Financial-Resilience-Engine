@@ -16,10 +16,10 @@ the future. A purchase is never paid with money the household doesn't have that 
 | `impulse` | **89.4%** (85.8%–92.2%) | 92.2% | 1.52 mo | 114.7 | 26.1% | 25.0% | 82.5% | 72.6% | 68.7% |
 | `50/30/20` | **49.5%** (44.4%–54.5%) | 62.8% | 1.25 mo | 66.9 | 59.3% | 61.0% | 71.5% | 43.7% | 55.8% |
 | `buffer` | **42.7%** (37.7%–47.8%) | 57.8% | 1.15 mo | 70.1 | 44.5% | 62.1% | 62.1% | 44.0% | 51.6% |
-| `spendwise-once` | **14.7%** (11.4%–18.7%) | 37.2% | 1.18 mo | 23.6 | 48.1% | 59.0% | 61.6% | 32.0% | 45.6% |
-| `spendwise-reserve` | **9.0%** (6.5%–12.3%) | 33.0% | 1.15 mo | 22.2 | 51.6% | 67.4% | 42.2% | 18.9% | 37.0% |
-| `spendwise` | **3.8%** (2.3%–6.3%) | 29.2% | 1.06 mo | 6.5 | 23.6% | 32.9% | 25.9% | 10.8% | 24.2% |
-| `deadline-first` | **7.3%** (5.1%–10.5%) | 31.8% | 1.13 mo | 16.4 | 47.4% | 67.8% | 24.1% | 10.5% | 26.0% |
+| `spendwise-once` | **14.7%** (11.4%–18.7%) | 37.2% | 1.18 mo | 23.5 | 48.1% | 59.0% | 61.6% | 32.0% | 45.6% |
+| `spendwise-reserve` | **9.0%** (6.5%–12.3%) | 33.0% | 1.15 mo | 22.2 | 51.8% | 67.6% | 42.2% | 18.8% | 37.0% |
+| `spendwise` | **3.8%** (2.3%–6.3%) | 29.2% | 1.06 mo | 6.5 | 23.6% | 32.9% | 25.8% | 10.8% | 24.2% |
+| `deadline-first` | **7.3%** (5.1%–10.5%) | 31.8% | 1.13 mo | 16.4 | 47.4% | 67.8% | 24.0% | 10.5% | 26.0% |
 
 *Avoidable overdraft*: the balance went below zero (bills could not be paid without
 credit) in a household that would have stayed above zero buying nothing; 368 of
@@ -48,7 +48,7 @@ the household would spend there anyway with no purchases.
 | calm | 220 | 31.9% | 69.8% | 69.4% | 69.4% | 77.4% | 43.5% | 77.8% |
 | delayed | 88 | 20.4% | 61.2% | 58.2% | 56.1% | 68.4% | 28.6% | 67.3% |
 | delayed + emergency | 41 | 15.8% | 49.1% | 45.6% | 47.4% | 50.9% | 21.1% | 52.6% |
-| emergency | 95 | 21.9% | 58.3% | 68.8% | 59.4% | 68.8% | 24.0% | 69.8% |
+| emergency | 95 | 21.9% | 58.3% | 68.8% | 59.4% | 69.8% | 24.0% | 69.8% |
 | lost | 34 | 24.1% | 41.4% | 44.8% | 31.0% | 41.4% | 24.1% | 41.4% |
 | lost + emergency | 22 | 12.9% | 38.7% | 41.9% | 32.3% | 35.5% | 19.4% | 35.5% |
 
@@ -56,24 +56,24 @@ the household would spend there anyway with no purchases.
 
 | World | Households | `impulse` | `50/30/20` | `buffer` | `spendwise-once` | `spendwise-reserve` | `spendwise` | `deadline-first` |
 |---|---|---|---|---|---|---|---|---|
-| calm | 220 | 76.0% | 62.2% | 58.6% | 48.7% | 44.2% | 29.9% | 30.6% |
-| delayed | 88 | 72.7% | 58.4% | 54.5% | 45.1% | 36.3% | 23.5% | 25.1% |
-| delayed + emergency | 41 | 59.6% | 49.8% | 43.4% | 44.2% | 28.4% | 15.2% | 20.4% |
-| emergency | 95 | 69.6% | 59.5% | 53.7% | 53.3% | 39.3% | 25.9% | 28.5% |
-| lost | 34 | 40.3% | 25.1% | 24.2% | 25.5% | 14.9% | 9.2% | 10.8% |
+| calm | 220 | 76.0% | 62.2% | 58.6% | 48.7% | 44.1% | 29.9% | 30.6% |
+| delayed | 88 | 72.7% | 58.4% | 54.5% | 45.0% | 36.3% | 23.5% | 25.2% |
+| delayed + emergency | 41 | 59.6% | 49.8% | 43.4% | 44.3% | 28.6% | 15.2% | 20.4% |
+| emergency | 95 | 69.6% | 59.5% | 53.7% | 53.2% | 39.3% | 25.7% | 28.4% |
+| lost | 34 | 40.3% | 25.1% | 24.2% | 25.5% | 15.0% | 9.2% | 10.8% |
 | lost + emergency | 22 | 36.9% | 23.7% | 18.8% | 14.3% | 8.0% | 5.7% | 6.9% |
 
 ## Findings
 
 1. **Planning prevents most avoidable overdrafts.** Every SpendWise variant stays at 3.8%–14.7%, against 42.7% for the best rule (`buffer`) and 89.4% for `impulse`. Rules that look only at today's balance cannot see next week's rent.
-2. **Replanning with the reserve beats the careful rule on both axes that matter.** `spendwise-reserve` has 9.0% avoidable overdrafts and buys 67.4% of hard-deadline needs on time; `buffer` has 42.7% and 62.1%. The price is fewer wants and desires (37.0% of the wish list against 51.6%).
+2. **Replanning with the reserve beats the careful rule on both axes that matter.** `spendwise-reserve` has 9.0% avoidable overdrafts and buys 67.6% of hard-deadline needs on time; `buffer` has 42.7% and 62.1%. The price is fewer wants and desires (37.0% of the wish list against 51.6%).
 3. **The app's default protection is cautious about needs.** Adding a rolling one-month salary-delay protection (`spendwise`) cuts avoidable overdrafts to 3.8%, but hard needs on time fall to 32.9%: when paying a deadline on time would go negative *if the salary were late*, the planner keeps the later, safe date. The `deadline-first` ablation pays such needs on time and gets 67.8% on time at 7.3% avoidable overdrafts. Neither dominates; which matters more is the household's choice, and the plan screen lets them choose what to protect.
 4. **No plan rescues a long income loss with thin savings.** In the *lost* worlds even the planner overdraws about a third of the time. In every such case inspected on the development seed, the purchases were hard-deadline needs paid before the loss began (or on the day the first salary failed to arrive): buying nothing would have avoided the overdraft only by missing those deadlines.
 
 ## Notes
 
 * `spendwise` replanned 7.9 times per household; one plan
-  took 15 ms on average. The whole benchmark ran in 171 s.
+  took 18 ms on average. The whole benchmark ran in 209 s.
 * SpendWise sometimes chooses to spend *less* than the rules. Buying less is not
   automatically better: compare the protection columns with the bought columns.
 * Nothing in the planner was tuned to this benchmark. Seed 7 was used while building

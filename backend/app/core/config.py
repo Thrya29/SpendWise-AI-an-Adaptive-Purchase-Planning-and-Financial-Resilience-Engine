@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     app_url: str = "http://localhost:3000"
     digest_hours: int = Field(default=20, ge=1, le=168)
     morning_hour: int = Field(default=7, ge=0, le=23)  # money alerts after this local hour
+    worker_heartbeat_path: str = "/tmp/spendwise-worker-heartbeat"  # noqa: S108 - tmpfs in Docker
 
     price_check_hours: int = Field(default=12, ge=1, le=168)
     fx_refresh_hours: int = Field(default=6, ge=1, le=48)

@@ -92,6 +92,13 @@ async def test_mock_summary_mentions_every_decision_group() -> None:
         facts(buy_now=[], scheduled=[], postponed=[], late=[], scenario_names=["As expected"])
     )
     assert "nothing to plan" in empty
+    # With nothing scheduled, the summary must not talk about "every scheduled purchase".
+    two = await MockAssistant().summarize_plan(
+        facts(buy_now=[], scheduled=[], postponed=[], late=[],
+              scenario_names=["As expected", "Salary delayed 1 month"])
+    )  # fmt: skip
+    assert "scheduled purchase" not in two
+    assert "reserve stays intact in both scenarios checked (As expected and Salary delayed" in two
 
 
 async def test_mock_summary_never_claims_safety_for_a_scenario_that_breaks_anyway() -> None:
@@ -99,8 +106,8 @@ async def test_mock_summary_never_claims_safety_for_a_scenario_that_breaks_anywa
         facts(unsafe_anyway=["Salary delayed 2 months"], buy_now=[], scheduled=[], late=[])
     )
     assert "Warning: in Salary delayed 2 months" in text
-    assert "intact in As expected." in text
-    assert "intact in As expected and Salary" not in text
+    assert "intact in the scenario checked (As expected)." in text
+    assert "Salary delayed 2 months)" not in text
     only_unsafe = await MockAssistant().summarize_plan(
         facts(scenario_names=["Salary delayed 2 months"], unsafe_anyway=["Salary delayed 2 months"])
     )

@@ -1,0 +1,11 @@
+{
+  "name": "spendwise-e2e",
+  "private": true,
+  "description": "End-to-end smoke test against a running SpendWise stack (Docker Compose in CI).",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}
