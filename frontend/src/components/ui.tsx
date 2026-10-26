@@ -64,7 +64,7 @@ export function Spinner({ className = "h-5 w-5" }: { className?: string }) {
 }
 
 const fieldBase =
-  "w-full rounded-lg border border-border bg-surface px-3 text-sm text-text placeholder:text-muted " +
+  "w-full rounded-lg border border-border bg-surface px-3 text-base text-text sm:text-sm placeholder:text-muted " +
   "focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25 aria-[invalid=true]:border-danger";
 
 interface FieldProps {

@@ -31,6 +31,7 @@ emergency reserve, and what happens if your **salary is delayed** or an **emerge
 | **"Describe it" entry** | Type *"work laptop for 75k by 15 Dec, must have"* and the assistant fills in the form for you to review. |
 | **AI assistant mode** | Each user chooses the built-in assistant (offline, no API key) or **their own Claude API key**, which is stored encrypted and never shown again. AI only reads text and writes summaries. It never does the math: a summary containing any number the engine didn't produce is rejected. Any AI failure falls back to the built-in assistant. |
 | **Feedback & pilot** | A *Feedback* button on every page, and once a month a three-question check-in on the dashboard: did you run short for a bill, miss a need's deadline, follow the plan? Users can opt in to pseudonymous usage statistics (off by default; no amounts or names; turning it off deletes them). Operators get an aggregate report with `python -m app.pilot_report` ([pilot guide](docs/PILOT.md)). |
+| **On your phone** | Works at phone width and installs to the home screen (*Add to Home Screen* / *Install app*) with its own icon. Form fields use 16px text on phones so iPhones don't zoom in. Nothing is cached offline, so balances are always live. |
 | **Account & privacy** | Sign-up with country, city, address and timezone; password change; full JSON data export; permanent account deletion. |
 
 ### Worked example (it's a regression test)
