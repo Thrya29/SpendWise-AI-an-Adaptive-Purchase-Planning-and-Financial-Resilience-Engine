@@ -19,7 +19,7 @@ emergency reserve, and what happens if your **salary is delayed** or an **emerge
 | **Money** | Accounts with live balances, recurring income (weekly/monthly/quarterly/yearly/one-off), recurring expenses flagged as essential or discretionary, and one-off transactions. |
 | **Emergency reserve** | A configurable reserve (N months of essentials + a buffer) that plans must never spend. |
 | **What-if simulator** | Projects the balance day by day for 3–24 months. You can apply a **salary delay** (paid late as arrears) or **salary loss** for N months, plus an **unexpected expense**. You see when you'd dip into the reserve or run out, and which planned purchases stay safe. |
-| **Purchase planner** | Chooses the best month and day to buy each item, or postpones it, so your balance never drops below your reserve, **even if salary is late or lost** (you choose which shocks to guard against). It is an exact constraint solver (OR-Tools CP-SAT), not a heuristic. Every decision has a reason: postponed items show the exact extra money needed and by when. Nothing changes until you approve, and using the reserve always needs explicit consent. |
+| **Purchase planner** | Chooses the best month and day to buy each item, or postpones it, so your balance never drops below your reserve, **even if salary is late or lost** (you choose which shocks to guard against). It is an exact constraint solver (OR-Tools CP-SAT), not a heuristic. Every decision has a reason: postponed items show the exact extra money needed and by when. Nothing changes until you approve, and using the reserve always needs explicit consent. On 500 simulated households living through salary delays, losses and emergencies, it caused **3.8% avoidable overdrafts against 42.7% for a careful keep-a-buffer rule** and 89% for buying when you can ([benchmark](docs/results/planner-benchmark.md)). |
 | **Prices from links** | Paste a product link and SpendWise reads the price the page publishes for search engines (schema.org data), along with its source, time and stock status. Every check is kept as price history, and you can also record quotes from local shops. Your planning price changes only when you click *Use this price* or turn on *Track this price*. Every price shows where it came from and how old it is. |
 | **Price alerts** | For tracked items: a price at or below your maximum, a drop of 5% or more, back in stock, or checks that keep failing. A background worker re-checks twice a day, politely spacing out visits to each site. |
 | **Price outlook** | *"64% chance of ₹53,000 or less by 22 Nov (medium confidence)"*, based only on the item's own price history. It counts past sales and drops, and shows no forecast at all with less than 5 checks over 14 days. On held-out simulated data it is well calibrated: **+0.227 Brier skill, 3% calibration error** ([results](docs/results/forecast-calibration.md)). The planner uses it when you're waiting for a better price. |
@@ -52,7 +52,7 @@ Browser ──► Next.js (UI + same-origin /api proxy) ──► FastAPI ──
 * **Typed contract.** The frontend's TypeScript types are generated from the API's OpenAPI schema,
   and CI fails if they drift.
 
-Full design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Planner: [ADR 0005](docs/adr/0005-robust-purchase-scheduling.md) · Market data: [ADR 0006](docs/adr/0006-market-data-provenance.md) · Forecasting: [ADR 0007](docs/adr/0007-price-drop-forecasting.md) · Savings & investing: [ADR 0008](docs/adr/0008-savings-and-investment-education.md) · Decisions: [docs/adr/](docs/adr/) ·
+Full design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Planner: [ADR 0005](docs/adr/0005-robust-purchase-scheduling.md) · Market data: [ADR 0006](docs/adr/0006-market-data-provenance.md) · Forecasting: [ADR 0007](docs/adr/0007-price-drop-forecasting.md) · Savings & investing: [ADR 0008](docs/adr/0008-savings-and-investment-education.md) · Benchmark: [ADR 0009](docs/adr/0009-planner-benchmark.md) · Decisions: [docs/adr/](docs/adr/) ·
 Security: [docs/SECURITY.md](docs/SECURITY.md)
 
 ## Run it
@@ -79,7 +79,7 @@ Every push runs in CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
 | ruff lint + format · mypy `--strict` | ESLint (0 warnings) · Prettier · `tsc` |
 | pytest on **SQLite and PostgreSQL 16** | Vitest unit tests |
 | Property-based tests (Hypothesis): money invariants, and *no plan ever breaks the reserve* | Production `next build` |
-| Coverage gate ≥ 85% (currently ~96%) · forecast calibration regression test | Generated API types must match the schema |
+| Coverage gate ≥ 85% (currently ~96%) · forecast calibration and planner benchmark regression tests | Generated API types must match the schema |
 | Migration ↔ model drift check + up/down round-trip | `npm audit` on production deps |
 | `pip-audit` on the locked runtime deps | Docker images must build |
 
@@ -106,10 +106,16 @@ Built in phases. Each phase ships tested and documented before the next begins.
 | 3 | Market data: link prices with provenance, price history and quotes, multi-currency (ECB), alerts, background worker; SSRF-hardened fetching | ✅ Done |
 | 4 | Calibrated price-drop forecasting (measured on held-out data), alternatives groups in the planner, verified web search for current alternatives | ✅ Done |
 | 5 | Savings & investment education: safe-to-lock amount, FD vs. savings, Monte Carlo SIP simulator, AMFI NAVs with fund history, gold reference and jewellery bill (sourced and timestamped; no advice) | ✅ Done |
-| 6 | Research benchmark: planner vs. baseline budgeting rules under simulated shocks | ⏳ Next |
-| 7 | Production hardening: observability, load tests, deployment guide | Planned |
+| 6 | Research benchmark: planner vs. impulse, 50/30/20 and keep-a-buffer rules on 500 simulated households under salary delays, losses and emergencies, with an ablation of the default protection | ✅ Done |
+| 7 | Production hardening: observability, load tests, deployment guide | ⏳ Next |
 
 ## Honest limits
+
+* **Protection has a price.** With the default one-month salary-delay protection, the benchmark
+  shows the planner buying only 33% of hard-deadline needs on time, against 67% when protecting the
+  reserve alone. Turn the delay protection off in the planner if meeting deadlines matters more to
+  you than surviving a late salary ([findings](docs/results/planner-benchmark.md#findings)).
+* The benchmark households are simulated: results describe the methods, not a real population.
 
 * **Not every shop can be read.** Big marketplaces often block automated checks or build the price
   with JavaScript. SpendWise then says it found no price, and you enter one yourself or record a

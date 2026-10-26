@@ -216,9 +216,27 @@ never recommend a security.
   dialects), the mfapi.in history loader, and the gold spot price. All come from fixed URLs with
   size and time caps. The worker refreshes them (AMFI and fund history daily, gold every 6 hours).
 
-## 14. What comes next
+## 14. Planner benchmark
 
-Phase 6 benchmarks the planner against simple budgeting rules (buy immediately, buy at the
-target date, a fixed price threshold, priority-first greedy) under simulated salary delays and
-emergencies. It measures essential-expense coverage, reserve breaches, cost, goals met and
-missed deadlines.
+`research/planner_benchmark.py` ([results](results/planner-benchmark.md),
+[ADR 0009](adr/0009-planner-benchmark.md)) lives 500 synthetic households through six months of
+one realised world each (calm, salary delayed 1–3 months, salary lost 2–4 months, an emergency,
+or both). Every policy sees only the past and obeys the same purchase guard (never pay with money
+not held that day):
+
+* Rules: `impulse` (buy when wanted or affordable), `50/30/20` (wants from 30% of income received),
+  `buffer` (keep two months of essentials, except hard deadlines).
+* Planner: once on day 0, or replanned monthly and after a missed salary or emergency, with the
+  reserve alone or with delay protection; plus a `deadline-first` ablation that patches stage 2
+  only inside the benchmark.
+* Metrics: avoidable overdraft (negative balance where buying nothing stays positive, with
+  Wilson intervals), depth, extra days below reserve, needs on time, and share of the wish list
+  bought, overall and per world.
+
+A 24-household version runs in CI and asserts that every planner variant has fewer avoidable
+overdrafts than `buffer`, which has fewer than `impulse`.
+
+## 15. What comes next
+
+Phase 7 hardens production: metrics and tracing, load tests of the planner and API, backup and
+restore, and a deployment guide.
