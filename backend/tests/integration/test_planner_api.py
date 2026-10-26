@@ -269,3 +269,58 @@ async def test_parse_item_endpoint(client: httpx.AsyncClient, auth: dict[str, st
     assert (
         await client.post(f"{API}/assistant/parse-item", json={"text": "x"}, headers=auth)
     ).status_code == 422
+
+
+async def test_on_time_option_is_applied_only_when_chosen(
+    client: httpx.AsyncClient, auth: dict[str, str]
+) -> None:
+    ids = await _seed(client, auth)
+    for other in ids.values():
+        assert (await client.delete(f"{API}/items/{other}", headers=auth)).status_code == 204
+    surgery = await _surgery(client, auth)
+    body = {"horizon_months": 4, "protect": [{"months": 2, "mode": "delayed"}]}
+
+    async def plan() -> dict[str, Any]:
+        r = await client.post(f"{API}/planner/plans", json=body, headers=auth)
+        assert r.status_code == 201, r.text
+        return r.json()
+
+    first = await plan()
+    d = _by_name(first)["surgery"]
+    soon = (date.today() + timedelta(days=1)).isoformat()
+    # Fine if salary arrives; 60k - 35k - 20k - 20k = -15k if it is two months late.
+    assert d["action"] != "use_reserve" and d["pay_on"] != soon
+    assert d["on_time_pay_on"] == soon and d["on_time_risk"] == ["Salary delayed 2 months"]
+    assert d["on_time_shortfall_minor"] == 1_500_000
+    # The item already targets that date, so choosing it changes nothing...
+    assert d["on_time_changes"] == {"target_date": None, "status": None}
+    r = await client.post(
+        f"{API}/planner/plans/{first['id']}/apply",
+        json={"item_ids": [], "on_time_item_ids": [surgery]}, headers=auth,
+    )  # fmt: skip
+    assert r.status_code == 200 and r.json()["skipped"] == [], r.text
+    item = (await client.get(f"{API}/items/{surgery}", headers=auth)).json()
+    assert item["target_date"] == soon and item["version"] == 1
+
+    # ...while not choosing it applies the safe, later date.
+    second = await plan()
+    assert _by_name(second)["surgery"]["on_time_pay_on"] == soon
+    r = await client.post(f"{API}/planner/plans/{second['id']}/apply", json={}, headers=auth)
+    assert r.status_code == 200 and surgery in r.json()["applied"]
+    item = (await client.get(f"{API}/items/{surgery}", headers=auth)).json()
+    assert item["target_date"] == _by_name(second)["surgery"]["pay_on"] != soon
+
+
+async def test_on_time_choice_for_an_item_without_the_option_is_skipped(
+    client: httpx.AsyncClient, auth: dict[str, str]
+) -> None:
+    ids = await _seed(client, auth)
+    plan = (
+        await client.post(f"{API}/planner/plans", json={"horizon_months": 2}, headers=auth)
+    ).json()
+    r = await client.post(
+        f"{API}/planner/plans/{plan['id']}/apply",
+        json={"on_time_item_ids": [ids["headphones"]]}, headers=auth,
+    )  # fmt: skip
+    skipped = {s["item_id"]: s["reason"] for s in r.json()["skipped"]}
+    assert "no on-time option" in skipped[ids["headphones"]]

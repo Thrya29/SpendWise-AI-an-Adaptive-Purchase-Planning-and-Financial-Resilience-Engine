@@ -72,9 +72,18 @@ export function hasChanges(d: Decision): boolean {
   return Boolean(d.changes.target_date || d.changes.status);
 }
 
+/** Which of a decision's options applying would use. */
+export type Choice = "plan" | "alternative" | "on_time";
+
+function changesFor(d: Decision, choice: Choice) {
+  if (choice === "alternative" && d.alternative_changes) return d.alternative_changes;
+  if (choice === "on_time" && d.on_time_changes) return d.on_time_changes;
+  return d.changes;
+}
+
 /** Human-readable preview of what applying will change, e.g. ["Target date: 15 Dec 2026 → 2 Jan 2027"]. */
-export function describeChanges(d: Decision, useAlternative = false, locale?: string): string[] {
-  const changes = useAlternative && d.alternative_changes ? d.alternative_changes : d.changes;
+export function describeChanges(d: Decision, choice: Choice = "plan", locale?: string): string[] {
+  const changes = changesFor(d, choice);
   const out: string[] = [];
   if (changes.target_date) {
     const from = changes.target_date.from ? formatDate(changes.target_date.from, locale) : "none";
@@ -82,6 +91,21 @@ export function describeChanges(d: Decision, useAlternative = false, locale?: st
   }
   if (changes.status) out.push(`Status: ${changes.status.from} → ${changes.status.to}`);
   return out;
+}
+
+/**
+ * For a hard deadline the plan could only meet by risking a shortfall: the trade-off, stated
+ * with engine numbers, e.g. "Paying on 30 Oct meets the deadline, but you could run ₹15,000
+ * short by 5 Dec (Salary delayed 2 months)."
+ */
+export function onTimeRisk(d: Decision, currency: string, locale?: string): string | null {
+  if (!d.on_time_pay_on || d.on_time_shortfall_minor == null) return null;
+  const when = d.on_time_shortfall_on ? ` by ${formatDate(d.on_time_shortfall_on, locale)}` : "";
+  const risk = d.on_time_risk?.length ? ` (${d.on_time_risk.join("; ")})` : "";
+  return (
+    `Paying on ${formatDate(d.on_time_pay_on, locale)} meets the deadline, but you could run ` +
+    `${formatMoney(d.on_time_shortfall_minor, currency, { locale })} short${when}${risk}.`
+  );
 }
 
 export const PROTECT_OPTIONS = [

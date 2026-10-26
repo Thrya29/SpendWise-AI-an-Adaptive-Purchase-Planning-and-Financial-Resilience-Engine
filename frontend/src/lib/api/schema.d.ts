@@ -1065,6 +1065,11 @@ export interface components {
              * @description Apply only these items' changes (default: all)
              */
             item_ids?: string[] | null;
+            /**
+             * On Time Item Ids
+             * @description Hard-deadline needs to pay on time despite the risk shown in the plan
+             */
+            on_time_item_ids?: string[];
         };
         /** ApplyResponse */
         ApplyResponse: {
@@ -1163,6 +1168,15 @@ export interface components {
             max_price_minor: number | null;
             /** Name */
             name: string;
+            on_time_changes?: components["schemas"]["ItemChanges"] | null;
+            /** On Time Pay On */
+            on_time_pay_on?: string | null;
+            /** On Time Risk */
+            on_time_risk?: string[];
+            /** On Time Shortfall Minor */
+            on_time_shortfall_minor?: number | null;
+            /** On Time Shortfall On */
+            on_time_shortfall_on?: string | null;
             /** Original Currency */
             original_currency: string;
             /** Original Unit Price Minor */

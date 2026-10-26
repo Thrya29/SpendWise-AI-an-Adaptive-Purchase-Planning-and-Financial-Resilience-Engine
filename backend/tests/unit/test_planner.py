@@ -244,3 +244,27 @@ def test_group_with_one_affordable_member_and_ungrouped_items_unaffected() -> No
     assert d["tv-led"].action is Action.BUY_NOW and d["tv-oled"].action is Action.ALTERNATIVE
     lonely = item("solo", 1_000, group="only-member")
     assert by_ref(run([lonely]))["solo"].action is Action.BUY_NOW
+
+
+def test_hard_need_on_time_only_if_salary_arrives_is_offered_not_chosen() -> None:
+    # 35k due 30 Oct. On time it is fine if salary lands (25k -> 70k on 1 Nov), but with the
+    # salary 2 months late: 25k -> 5k (5 Nov) -> -15k (5 Dec). The safe date stands; paying on
+    # time is offered with the scenario it would break and the exact shortfall.
+    fees = item("fees", 35_000, tier="need", priority=5, deadline="hard",
+                target_date=date(2026, 10, 30))  # fmt: skip
+    d = by_ref(run([fees], scenarios=(BASE, DELAYED_2), months=4))["fees"]
+    assert d.action is not Action.USE_RESERVE and d.pay_on != date(2026, 10, 30)
+    assert d.on_time is not None
+    assert d.on_time.pay_on == date(2026, 10, 30)
+    assert d.on_time.at_risk == ("Salary delayed 2 months",)
+    assert (d.on_time.shortfall, d.on_time.shortfall_on) == (15_000_00, date(2026, 12, 5))
+
+
+def test_no_on_time_option_when_it_is_safe_or_impossible() -> None:
+    med = item("surgery", 35_000, tier="need", priority=5, deadline="hard",
+               target_date=date(2026, 10, 30))  # fmt: skip
+    assert by_ref(run([med], months=2))["surgery"].on_time is None  # plain USE_RESERVE
+    big = item("repair", 70_000, tier="need", priority=5, deadline="hard",
+               target_date=date(2026, 10, 30))  # fmt: skip
+    # Not solvent even as expected: nothing to offer.
+    assert by_ref(run([big], scenarios=(BASE, DELAYED_2), months=3))["repair"].on_time is None

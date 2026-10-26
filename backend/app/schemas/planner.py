@@ -77,6 +77,13 @@ class DecisionOut(ApiModel):
     forecast_note: str | None = None
     # Trade-offs the user should see, e.g. a preferred alternative still waiting for a price.
     group_note: str | None = None
+    # Hard-deadline needs: paying on time is possible "as expected" but would run out of money
+    # in the scenarios listed. Only applied if the user names the item in on_time_item_ids.
+    on_time_pay_on: date | None = None
+    on_time_risk: list[str] = Field(default_factory=list)
+    on_time_shortfall_minor: int | None = None
+    on_time_shortfall_on: date | None = None
+    on_time_changes: ItemChanges | None = None
 
 
 class ScenarioOut(ApiModel):
@@ -136,6 +143,10 @@ class ApplyRequest(ApiModel):
     )
     allow_reserve: bool = Field(
         default=False, description="Required to apply decisions that dip into the reserve"
+    )
+    on_time_item_ids: Annotated[list[UUID], Field(max_length=300)] = Field(
+        default_factory=list,
+        description="Hard-deadline needs to pay on time despite the risk shown in the plan",
     )
 
 

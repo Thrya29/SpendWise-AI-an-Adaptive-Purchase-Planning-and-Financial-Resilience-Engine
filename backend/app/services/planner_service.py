@@ -77,18 +77,36 @@ async def fingerprint(session: AsyncSession, user: User, today: date) -> str:
     return hashlib.sha256(blob).hexdigest()
 
 
+def _schedule_changes(item: PlannedItem, pay_on: date) -> dict[str, Any]:
+    changes: dict[str, Any] = {}
+    new_target = pay_on + timedelta(days=item.lead_time_days)
+    if new_target != item.target_date:
+        changes["target_date"] = {"from": item.target_date, "to": new_target}
+    if item.status is not ItemStatus.PLANNED:
+        changes["status"] = {"from": item.status, "to": ItemStatus.PLANNED}
+    return changes
+
+
 def _changes(item: PlannedItem, d: Decision, pay_on: date | None = None) -> ItemChanges:
     changes: dict[str, Any] = {}
     pay_on = pay_on or d.pay_on
     if d.action in _SCHEDULING and pay_on is not None:
-        new_target = pay_on + timedelta(days=item.lead_time_days)
-        if new_target != item.target_date:
-            changes["target_date"] = {"from": item.target_date, "to": new_target}
-        if item.status is not ItemStatus.PLANNED:
-            changes["status"] = {"from": item.status, "to": ItemStatus.PLANNED}
+        changes = _schedule_changes(item, pay_on)
     elif d.action is Action.POSTPONE and item.status is not ItemStatus.POSTPONED:
         changes["status"] = {"from": item.status, "to": ItemStatus.POSTPONED}
     return ItemChanges.model_validate(changes)
+
+
+def _on_time_fields(item: PlannedItem, d: Decision) -> dict[str, Any]:
+    if d.on_time is None:
+        return {}
+    return {
+        "on_time_pay_on": d.on_time.pay_on,
+        "on_time_risk": list(d.on_time.at_risk),
+        "on_time_shortfall_minor": d.on_time.shortfall,
+        "on_time_shortfall_on": d.on_time.shortfall_on,
+        "on_time_changes": ItemChanges.model_validate(_schedule_changes(item, d.on_time.pay_on)),
+    }
 
 
 async def _wait_forecast(
@@ -301,6 +319,7 @@ async def create_plan(session: AsyncSession, user: User, req: PlanRequest, today
                 alternative_changes=_changes(row, d, d.alternative_pay_on)
                 if d.alternative_pay_on
                 else None,
+                **_on_time_fields(row, d),
             )
         )  # fmt: skip
 
@@ -375,7 +394,8 @@ async def apply_plan(
             extra={"stale": True},
         )
     out = PlanOut.model_validate(plan.result)
-    wanted = set(req.item_ids) if req.item_ids is not None else None
+    on_time = set(req.on_time_item_ids)
+    wanted = set(req.item_ids) | on_time if req.item_ids is not None else None
     repo = OwnedRepository(session, PlannedItem, user.id)
     applied: list[UUID] = []
     skipped: list[SkippedOut] = []
@@ -383,7 +403,14 @@ async def apply_plan(
         if wanted is not None and d.item_id not in wanted:
             continue
         changes = d.changes
-        if d.requires_reserve_approval and not req.allow_reserve:
+        if d.item_id in on_time:
+            if d.on_time_changes is None:
+                skipped.append(
+                    SkippedOut(item_id=d.item_id, reason="This plan has no on-time option for it")
+                )
+                continue
+            changes = d.on_time_changes  # the user accepted the risk shown in the plan
+        elif d.requires_reserve_approval and not req.allow_reserve:
             if d.alternative_changes is None:
                 skipped.append(
                     SkippedOut(item_id=d.item_id, reason="Needs approval to use the reserve")
@@ -399,8 +426,9 @@ async def apply_plan(
             continue
         await repo.update(d.item_id, d.item_version, values)
         applied.append(d.item_id)
-    if wanted is not None:
-        unknown = wanted - {d.item_id for d in out.decisions}
+    known = {d.item_id for d in out.decisions}
+    if wanted is not None or on_time:
+        unknown = (wanted if wanted is not None else on_time) - known
         skipped += [SkippedOut(item_id=i, reason="Not part of this plan") for i in sorted(unknown)]
     plan.status = PlanStatus.APPLIED
     plan.applied_at = utcnow()

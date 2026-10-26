@@ -24,7 +24,9 @@ import {
   describeChanges,
   explain,
   hasChanges,
+  onTimeRisk,
   PROTECT_OPTIONS,
+  type Choice,
   type Decision,
   type Plan,
 } from "@/lib/planner";
@@ -40,7 +42,9 @@ function DecisionRow({
   selectable,
   selected,
   onToggle,
-  useAlternative,
+  choice,
+  onTime,
+  onToggleOnTime,
 }: {
   d: Decision;
   currency: string;
@@ -48,9 +52,12 @@ function DecisionRow({
   selectable: boolean;
   selected: boolean;
   onToggle: () => void;
-  useAlternative: boolean;
+  choice: Choice;
+  onTime: boolean;
+  onToggleOnTime: () => void;
 }) {
-  const changes = describeChanges(d, useAlternative);
+  const changes = describeChanges(d, choice);
+  const risk = onTimeRisk(d, currency);
   return (
     <li className="flex gap-3 py-3">
       <div className="pt-0.5">
@@ -74,6 +81,21 @@ function DecisionRow({
         </div>
         <p className="mt-0.5 text-sm text-muted">{explain(d, currency, undefined, nameOf)}</p>
         {d.group_note && <p className="mt-1 text-sm text-warning">{d.group_note}</p>}
+        {risk && (
+          <div className="mt-2 rounded-lg bg-warning-soft p-3 text-sm">
+            <p className="text-warning">{risk}</p>
+            {selectable && (
+              <div className="mt-2">
+                <Checkbox
+                  label="Pay on time anyway"
+                  hint="I accept this risk for this deadline"
+                  checked={onTime}
+                  onChange={onToggleOnTime}
+                />
+              </div>
+            )}
+          </div>
+        )}
         {changes.length > 0 && (
           <p className="mt-1 text-xs text-muted">
             <span className="font-medium text-text">If applied:</span> {changes.join(" · ")}
@@ -103,6 +125,7 @@ export default function PlannerPage() {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [allowReserve, setAllowReserve] = useState(false);
+  const [onTime, setOnTime] = useState<Set<string>>(new Set());
   const [running, setRunning] = useState(false);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -137,6 +160,7 @@ export default function PlannerPage() {
         ),
       );
       setAllowReserve(false);
+      setOnTime(new Set());
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "The planner could not run. Please try again.",
@@ -153,7 +177,11 @@ export default function PlannerPage() {
     try {
       const res = await api<ApplyResult>(`/planner/plans/${plan.id}/apply`, {
         method: "POST",
-        body: { item_ids: [...selected], allow_reserve: allowReserve },
+        body: {
+          item_ids: [...selected],
+          allow_reserve: allowReserve,
+          on_time_item_ids: [...onTime],
+        },
       });
       setApplied(res);
       setPlan({ ...plan, status: res.status });
@@ -169,14 +197,15 @@ export default function PlannerPage() {
     }
   }
 
-  function toggle(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  function flip(set: Set<string>, id: string): Set<string> {
+    const next = new Set(set);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
   }
+  const toggle = (id: string) => setSelected((prev) => flip(prev, id));
+  const toggleOnTime = (id: string) => setOnTime((prev) => flip(prev, id));
+  const changeCount = new Set([...selected, ...onTime]).size;
 
   const nameOf = (id: string) => plan?.decisions.find((x) => x.item_id === id)?.name;
   const selectable = plan?.status === "draft" && !plan.stale;
@@ -385,7 +414,15 @@ export default function PlannerPage() {
                             }
                             selected={selected.has(d.item_id)}
                             onToggle={() => toggle(d.item_id)}
-                            useAlternative={d.action === "use_reserve" && !allowReserve}
+                            choice={
+                              onTime.has(d.item_id)
+                                ? "on_time"
+                                : d.action === "use_reserve" && !allowReserve
+                                  ? "alternative"
+                                  : "plan"
+                            }
+                            onTime={onTime.has(d.item_id)}
+                            onToggleOnTime={() => toggleOnTime(d.item_id)}
                           />
                         ))}
                       </ul>
@@ -408,9 +445,9 @@ export default function PlannerPage() {
                     className="sm:ml-auto"
                     onClick={() => void apply()}
                     loading={applying}
-                    disabled={selected.size === 0}
+                    disabled={changeCount === 0}
                   >
-                    Apply {selected.size} selected change{selected.size === 1 ? "" : "s"}
+                    Apply {changeCount} selected change{changeCount === 1 ? "" : "s"}
                   </Button>
                 </div>
               )}

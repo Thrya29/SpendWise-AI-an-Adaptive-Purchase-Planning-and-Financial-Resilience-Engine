@@ -137,7 +137,9 @@ consequences are in [ADR 0005](adr/0005-robust-purchase-scheduling.md). In short
   desires; value decays when an item is late or bought needlessly early.
 * **Consent:** a hard-deadline need that only fits on time by using the reserve is proposed as
   `use_reserve` with its reserve-safe alternative date. Applying without approval uses the safe
-  date.
+  date. If on time is solvent only in the expected scenario, the safe decision stands and the
+  decision carries an `on_time_*` option (date, scenarios at risk, deepest shortfall). It is
+  applied only for items listed in `on_time_item_ids`.
 * **Output:** one decision per item (`buy_now`, `schedule`, `postpone`, `wait_price`,
   `use_reserve`) with a reason, the exact shortfall for postponed items, and a preview of the item
   changes that applying would make.

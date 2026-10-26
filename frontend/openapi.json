@@ -397,6 +397,16 @@
             ],
             "description": "Apply only these items' changes (default: all)",
             "title": "Item Ids"
+          },
+          "on_time_item_ids": {
+            "description": "Hard-deadline needs to pay on time despite the risk shown in the plan",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 300,
+            "title": "On Time Item Ids",
+            "type": "array"
           }
         },
         "title": "ApplyRequest",
@@ -726,6 +736,58 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "on_time_changes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ItemChanges"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "on_time_pay_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Time Pay On"
+          },
+          "on_time_risk": {
+            "items": {
+              "type": "string"
+            },
+            "title": "On Time Risk",
+            "type": "array"
+          },
+          "on_time_shortfall_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Time Shortfall Minor"
+          },
+          "on_time_shortfall_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Time Shortfall On"
           },
           "original_currency": {
             "title": "Original Currency",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { describeChanges, explain, hasChanges, type Decision } from "./planner";
+import { describeChanges, explain, hasChanges, onTimeRisk, type Decision } from "./planner";
 
 // Pin the locale: Node picks it up from the machine, which differs between laptops and CI.
 const L = "en-IN";
@@ -112,11 +112,29 @@ describe("changes", () => {
       alternative_changes: { target_date: { from: null, to: "2026-12-02" }, status: null },
     });
     expect(hasChanges(d)).toBe(true);
-    expect(describeChanges(d, false, L)).toEqual([
+    expect(describeChanges(d, "plan", L)).toEqual([
       "Target date: none → 20 Nov 2026",
       "Status: postponed → planned",
     ]);
-    expect(describeChanges(d, true, L)).toEqual(["Target date: none → 2 Dec 2026"]);
+    expect(describeChanges(d, "alternative", L)).toEqual(["Target date: none → 2 Dec 2026"]);
+    expect(describeChanges(d, "on_time", L)).toEqual(describeChanges(d, "plan", L));
     expect(hasChanges(decision({}))).toBe(false);
+  });
+
+  it("states the on-time risk with engine numbers, or nothing", () => {
+    const d = decision({
+      action: "schedule",
+      late: true,
+      on_time_pay_on: "2026-10-30",
+      on_time_risk: ["Salary delayed 2 months"],
+      on_time_shortfall_minor: 1_500_000,
+      on_time_shortfall_on: "2026-12-05",
+      on_time_changes: { target_date: { from: "2027-01-02", to: "2026-10-30" }, status: null },
+    });
+    expect(onTimeRisk(d, "INR", L)).toBe(
+      "Paying on 30 Oct 2026 meets the deadline, but you could run ₹15,000.00 short by 5 Dec 2026 (Salary delayed 2 months).",
+    );
+    expect(describeChanges(d, "on_time", L)).toEqual(["Target date: 2 Jan 2027 → 30 Oct 2026"]);
+    expect(onTimeRisk(decision({}), "INR", L)).toBeNull();
   });
 });

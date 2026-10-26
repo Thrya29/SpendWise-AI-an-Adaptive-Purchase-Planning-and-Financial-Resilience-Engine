@@ -29,13 +29,16 @@ and decays for buying late (soft or hard deadline) or needlessly early.
 
 Hard-deadline *needs* that cannot fit above the reserve are then checked for plain
 solvency (``R = 0``); if they fit they are proposed as USE_RESERVE, never silently.
+If paying on time is solvent only in the first ("as expected") scenario, the safe decision
+stands and the on-time date is offered as an explicit option, with the scenarios in which it
+would run out of money and by how much. Choosing it is the user's call.
 """
 
 from __future__ import annotations
 
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 from enum import StrEnum
 
@@ -137,6 +140,19 @@ class Decision:
     alternative_pay_on: date | None = None
     # For ALTERNATIVE: the item from the same group that was chosen instead.
     chosen_alternative: str | None = None
+    # Hard-deadline needs whose on-time date is solvent only "as expected": an opt-in option.
+    on_time: OnTimeOption | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class OnTimeOption:
+    """Paying a hard-deadline need on time, at the risk of running out in some scenarios."""
+
+    pay_on: date
+    period: int
+    at_risk: tuple[str, ...]  # scenario names in which the balance would go negative
+    shortfall: int  # deepest negative balance across those scenarios (minor units)
+    shortfall_on: date
 
 
 @dataclass(frozen=True, slots=True)
@@ -413,6 +429,7 @@ class _Planner:
         self.candidates = [it for it in items if it.ref not in waiting_refs]
         self.chosen: dict[str, int] = {}
         self.reserve_users: dict[str, date | None] = {}  # ref -> later reserve-safe date
+        self.on_time: dict[str, OnTimeOption] = {}
 
     def warnings(self) -> list[str]:
         return [
@@ -520,18 +537,35 @@ class _Planner:
             q = min(self.targets[it.ref] or 0, len(self.periods) - 1)
             day = self.pay[it.ref, q]
             later = self.chosen.pop(it.ref, None)
-            solvent = all(
-                self.spent_by(k) + it.cost <= lg.lows[k]
-                for lg in self.ledgers
-                for k in range(day, len(lg.lows))
-            )
-            if solvent:
+            gaps = [self._deepest_gap(lg, day, it.cost) for lg in self.ledgers]
+            if all(g is None for g in gaps):
                 self.chosen[it.ref] = q
                 self.reserve_users[it.ref] = (
                     self.ledgers[0].day(self.pay[it.ref, later]) if later is not None else None
                 )
-            elif later is not None:
-                self.chosen[it.ref] = later  # on time is not even solvent; keep the safe date
+                continue
+            if later is not None:
+                self.chosen[it.ref] = later  # on time is not solvent everywhere; keep safe date
+            if gaps[0] is None and not _is_late(it, self.ledgers[0].day(day)):
+                worst = max((g for g in gaps if g is not None), key=lambda g: g[0])
+                self.on_time[it.ref] = OnTimeOption(
+                    pay_on=self.ledgers[0].day(day),
+                    period=q,
+                    at_risk=tuple(
+                        ns.name for ns, g in zip(self.named, gaps, strict=True) if g is not None
+                    ),
+                    shortfall=worst[0],
+                    shortfall_on=self.ledgers[0].day(worst[1]),
+                )
+
+    def _deepest_gap(self, lg: _Ledger, day: int, cost: int) -> tuple[int, int] | None:
+        """How far below zero paying ``cost`` on ``day`` would take this scenario, and when."""
+        worst: tuple[int, int] | None = None
+        for k in range(day, len(lg.lows)):
+            gap = self.spent_by(k) + cost - lg.lows[k]
+            if gap > 0 and (worst is None or gap > worst[0]):
+                worst = (gap, k)
+        return worst
 
     # ---- Stage 3: one explained decision per item ------------------------------
     def decide(self) -> dict[str, Decision]:
@@ -542,12 +576,14 @@ class _Planner:
         for it in self.candidates:
             if it.ref in self.chosen:
                 decisions[it.ref] = self._scheduled(it)
+                if it.ref in self.on_time:
+                    decisions[it.ref] = replace(decisions[it.ref], on_time=self.on_time[it.ref])
             elif (winner := self._group_winner(it)) is not None:
                 decisions[it.ref] = Decision(
                     it.ref, Action.ALTERNATIVE, Reason.ALTERNATIVE_CHOSEN, chosen_alternative=winner
                 )
             else:
-                decisions[it.ref] = self._postponed(it)
+                decisions[it.ref] = replace(self._postponed(it), on_time=self.on_time.get(it.ref))
         return decisions
 
     def _scheduled(self, it: PlanItem) -> Decision:

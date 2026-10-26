@@ -25,6 +25,10 @@ buffer. No public dataset joins wish lists with daily cash flow, so the test is 
 
 ## Consequences
 * The README states the trade-off, and users can turn delay protection off in the planner.
+* Amendment (2026-10-26): instead of choosing for the user, each affected hard-deadline need now
+  carries an explicit on-time option with the scenarios it would break and the exact shortfall.
+  The user can opt in per item ("Pay on time anyway"). The default decision is unchanged, so the
+  benchmark numbers still describe the default.
 * A 24-household run in CI guards the ranking of overdraft rates.
 * If real usage data accumulates (with consent), the benchmark should be repeated on it before any
   accuracy claim about real households.

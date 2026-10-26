@@ -113,8 +113,9 @@ Built in phases. Each phase ships tested and documented before the next begins.
 
 * **Protection has a price.** With the default one-month salary-delay protection, the benchmark
   shows the planner buying only 33% of hard-deadline needs on time, against 67% when protecting the
-  reserve alone. Turn the delay protection off in the planner if meeting deadlines matters more to
-  you than surviving a late salary ([findings](docs/results/planner-benchmark.md#findings)).
+  reserve alone ([findings](docs/results/planner-benchmark.md#findings)). So when a deadline is
+  affordable only if salary arrives, the plan keeps the safe date but shows the on-time option
+  with the exact shortfall it risks, and you can tick *Pay on time anyway* for that item.
 * The benchmark households are simulated: results describe the methods, not a real population.
 
 * **Not every shop can be read.** Big marketplaces often block automated checks or build the price
