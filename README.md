@@ -18,6 +18,29 @@ emergency reserve, and what happens if your **salary is delayed** or an **emerge
 <sub>Recorded from the real app running locally with made-up demo data. The shop page in the
 extension part is a sample page made for the recording.</sub>
 
+## Screenshots
+
+<table>
+<tr>
+<td width="50%"><a href="docs/manual/img/08-dashboard.png"><img src="docs/media/readme/08-dashboard.png" alt="Dashboard: your balance for every day ahead, with the reserve line"></a><br><sub>Dashboard: your balance for every day ahead, with the reserve line</sub></td>
+<td width="50%"><a href="docs/manual/img/09-what-if.png"><img src="docs/media/readme/09-what-if.png" alt="What if salary is 2 months late? See the problem before it happens"></a><br><sub>What if salary is 2 months late? See the problem before it happens</sub></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/manual/img/17-planner-everyday.png"><img src="docs/media/readme/17-planner-everyday.png" alt="Planner: when to buy each item, with the reason and the risk"></a><br><sub>Planner: when to buy each item, with the reason and the risk</sub></td>
+<td width="50%"><a href="docs/manual/img/04-import-choose.png"><img src="docs/media/readme/04-import-choose.png" alt="Import a bank statement: salary and bills found for you"></a><br><sub>Import a bank statement: salary and bills found for you</sub></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/manual/img/15-price-history.png"><img src="docs/media/readme/15-price-history.png" alt="Price history and the chance of a sale before you need it"></a><br><sub>Price history and the chance of a sale before you need it</sub></td>
+<td width="50%"><a href="docs/manual/img/12-extension-popup.png"><img src="docs/media/readme/12-extension-popup.png" alt="Browser extension: save a price from any shop page"></a><br><sub>Browser extension: save a price from any shop page</sub></td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/manual/img/19-simulator.png"><img src="docs/media/readme/19-simulator.png" alt="Savings & investing: a range of outcomes, not a promise"></a><br><sub>Savings & investing: a range of outcomes, not a promise</sub></td>
+<td width="50%"><a href="docs/manual/img/20-phone-dashboard.png"><img src="docs/media/readme/20-phone.png" alt="Works on your phone"></a><br><sub>Works on your phone</sub></td>
+</tr>
+</table>
+
+More pictures, one for every step, in the **[user manual](docs/USER_MANUAL.md)**.
+
 ---
 
 ## Start here (first time)

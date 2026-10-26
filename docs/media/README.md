@@ -4,6 +4,7 @@
 |---|---|---|
 | `spendwise-walkthrough.mp4` | 4-minute walkthrough: first time, every week, on a phone (1280×720, H.264) | README, LinkedIn |
 | `spendwise-demo.gif` | 53-second highlights at double speed (800 px) | README |
+| `readme/*.png` | One-screen crops of the user-manual screenshots (`docs/manual/img`) | README screenshot grid |
 
 Both are built from the Playwright recordings (`e2e/demo/record.spec.ts`, see
 [DEVELOPMENT.md](../DEVELOPMENT.md#re-recording-the-walkthrough-gif-and-manual-screenshots)):
